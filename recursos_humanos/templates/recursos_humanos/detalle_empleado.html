@@ -1,0 +1,104 @@
+{% extends 'recursos_humanos/base.html' %}
+{% block content %}
+<div class="row">
+    <div class="col-md-7">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Ficha de: {{ empleado.nombre_completo }}</h5>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'editar_empleado' empleado.pk %}" class="btn btn-sm btn-warning">Editar Datos</a>
+                    <form method="post" action="{% url 'eliminar_empleado' empleado.pk %}" onsubmit="return confirm('¿Confirma la eliminación definitiva de esta ficha?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-danger">Eliminar Ficha</button>
+                    </form>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if empleado.fotografia %}
+                    <img src="{{ empleado.fotografia.url }}" alt="Fotografía de {{ empleado.nombre_completo }}" class="img-thumbnail mb-3" style="max-height: 150px;">
+                {% endif %}
+                <p><strong>RUT:</strong> {{ empleado.rut }}</p>
+                <p><strong>Primer y Segundo Nombre:</strong> {{ empleado.primer_nombre }} {{ empleado.segundo_nombre|default:"—" }}</p>
+                <p><strong>Apellidos:</strong> {{ empleado.apellido_paterno }} {{ empleado.apellido_materno }}</p>
+                <p><strong>Fecha de Nacimiento:</strong> {{ empleado.fecha_nacimiento }}</p>
+                <p><strong>Dirección:</strong> {{ empleado.direccion }} | <strong>Teléfono:</strong> {{ empleado.telefono }}</p>
+                <p><strong>Correo Electrónico:</strong> {{ empleado.email }}</p>
+                <hr>
+                <p><strong>Cargo:</strong> {{ empleado.cargo }}</p>
+                <p><strong>Centro de Costo:</strong> {{ empleado.get_centro_costo_display }} <span class="badge bg-info text-dark">ID Interno: {{ empleado.centro_costo }}</span></p>
+                <p><strong>Contrato:</strong> {{ empleado.get_tipo_contrato_display }} (Ingreso: {{ empleado.fecha_ingreso }})</p>
+                <p><strong>Previsión:</strong> {{ empleado.get_prevision_display }} | <strong>AFP:</strong> {{ empleado.get_afp_display }}</p>
+                <p><strong>ID Reloj Control (Asignado por Sistema):</strong> <span class="badge bg-secondary">{{ empleado.codigo_reloj_control }}</span></p>
+                {% if empleado.curriculum %}
+                    <a href="{{ empleado.curriculum.url }}" target="_blank" class="btn btn-outline-primary btn-sm mt-2">Descargar Currículum (PDF)</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-5">
+        <div class="card shadow-sm">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">Cargas Familiares</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group mb-3">
+                    {% for carga in cargas %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ carga.nombre_completo }}</strong> ({{ carga.get_parentesco_display }})<br>
+                                <small class="text-muted">RUT: {{ carga.rut_carga }} | Nac: {{ carga.fecha_nacimiento }}</small>
+                            </div>
+                            <form method="post" action="{% url 'eliminar_carga_familiar' empleado.pk carga.pk %}" onsubmit="return confirm('¿Eliminar a {{ carga.nombre_completo }} de las cargas familiares?');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
+                            </form>
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item text-muted">Sin cargas registradas.</li>
+                    {% endfor %}
+                </ul>
+                <h6>Agregar Carga Familiar</h6>
+                <p class="text-muted small mb-2">
+                    Todos los campos marcados con <span class="text-danger fw-bold">*</span> son obligatorios.
+                </p>
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    {% for field in carga_form %}
+                    <div class="mb-2">
+                        <label for="{{ field.id_for_label }}" class="form-label small fw-bold mb-1">
+                            {{ field.label }}{% if field.field.required %}<span class="text-danger ms-1">*</span>{% endif %}
+                        </label>
+                        {{ field }}
+                        <div class="text-danger small" id="error_{{ field.id_for_label }}">
+                            {% if field.errors %}{{ field.errors|striptags }}{% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                    <button type="submit" class="btn btn-sm btn-primary w-100 mt-2">Registrar Carga</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const rutCargaInput = document.getElementById("id_rut_carga");
+    if (!rutCargaInput) return;
+
+    function formatearRut(valor) {
+        let limpio = valor.replace(/[^0-9kK]/g, "").toUpperCase().slice(0, 9);
+        if (limpio.length <= 1) return limpio;
+
+        let cuerpo = limpio.slice(0, -1).replace(/[^0-9]/g, "");
+        let dv = limpio.slice(-1);
+        let cuerpoConPuntos = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        return `${cuerpoConPuntos}-${dv}`;
+    }
+
+    rutCargaInput.addEventListener("input", function (e) {
+        e.target.value = formatearRut(e.target.value);
+    });
+});
+</script>
+{% endblock %}

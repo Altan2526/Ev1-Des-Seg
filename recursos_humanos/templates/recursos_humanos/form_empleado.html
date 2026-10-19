@@ -1,0 +1,233 @@
+{% extends 'recursos_humanos/base.html' %}
+{% block content %}
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">{{ accion }} Ficha de Empleado</h4>
+    </div>
+    <div class="card-body">
+        <p class="text-muted small mb-4">
+            Todos los campos marcados con <span class="text-danger fw-bold">*</span> son obligatorios.
+        </p>
+
+        <form method="post" enctype="multipart/form-data" id="formEmpleado" novalidate>
+            {% csrf_token %}
+            <div class="row">
+                {% for field in form %}
+                <div class="col-md-6 mb-3">
+                    <label for="{{ field.id_for_label }}" class="form-label fw-bold">
+                        {{ field.label }}{% if field.field.required %}<span class="text-danger ms-1">*</span>{% endif %}
+                    </label>
+                    {{ field }}
+                    <div class="text-danger small mt-1" id="error_{{ field.id_for_label }}">
+                        {% if field.errors %}{{ field.errors|striptags }}{% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="mt-2">
+                <button type="submit" class="btn btn-success">Guardar Ficha</button>
+                <a href="{% url 'lista_empleados' %}" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const form = document.getElementById("formEmpleado");
+    const rutInput = document.getElementById("id_rut");
+    const telInput = document.getElementById("id_telefono");
+    const emailInput = document.getElementById("id_email");
+
+    function mostrarError(input, mensaje) {
+        const contenedorError = document.getElementById("error_" + input.id);
+        if (mensaje) {
+            input.classList.add("is-invalid");
+            input.classList.remove("is-valid");
+            if (contenedorError) contenedorError.textContent = mensaje;
+            return false;
+        } else {
+            input.classList.remove("is-invalid");
+            if (input.value.trim() !== "") input.classList.add("is-valid");
+            if (contenedorError) contenedorError.textContent = "";
+            return true;
+        }
+    }
+
+    // 1. Formateo y Validación Matemática Módulo 11 de RUT en vivo
+    function formatearRut(valor) {
+        let limpio = valor.replace(/[^0-9kK]/g, "").toUpperCase().slice(0, 9);
+        if (limpio.length <= 1) return limpio;
+        let cuerpo = limpio.slice(0, -1).replace(/[^0-9]/g, "");
+        let dv = limpio.slice(-1);
+        let cuerpoConPuntos = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        return `${cuerpoConPuntos}-${dv}`;
+    }
+
+    function esRutValidoModulo11(valor) {
+        let limpio = valor.replace(/[^0-9kK]/g, "").toUpperCase();
+        if (!/^\d{7,8}[0-9K]$/.test(limpio)) return false;
+
+        let cuerpo = limpio.slice(0, -1);
+        let dvIngresado = limpio.slice(-1);
+        let suma = 0;
+        let multiplo = 2;
+
+        for (let i = cuerpo.length - 1; i >= 0; i--) {
+            suma += parseInt(cuerpo.charAt(i), 10) * multiplo;
+            multiplo = multiplo < 7 ? multiplo + 1 : 2;
+        }
+
+        let resto = 11 - (suma % 11);
+        let dvCalculado = resto === 11 ? "0" : resto === 10 ? "K" : resto.toString();
+        return dvIngresado === dvCalculado;
+    }
+
+    function validarCampoRut() {
+        if (!rutInput) return true;
+        const valor = rutInput.value.trim();
+        if (!valor) {
+            return mostrarError(rutInput, "Este campo es obligatorio.");
+        }
+        let limpio = valor.replace(/[^0-9kK]/g, "");
+        if (limpio.length < 8) {
+            return mostrarError(rutInput, "El formato del RUT no es válido (Ej: 18.456.789-2).");
+        }
+        if (!esRutValidoModulo11(valor)) {
+            return mostrarError(rutInput, "El RUT ingresado es inválido (dígito verificador incorrecto).");
+        }
+        return mostrarError(rutInput, "");
+    }
+
+    if (rutInput) {
+        rutInput.addEventListener("input", function (e) {
+            e.target.value = formatearRut(e.target.value);
+            let limpio = e.target.value.replace(/[^0-9kK]/g, "");
+            // Valida instantáneamente al completar los 8 o 9 caracteres del RUT
+            if (limpio.length >= 8) {
+                validarCampoRut();
+            } else {
+                rutInput.classList.remove("is-invalid", "is-valid");
+                document.getElementById("error_" + rutInput.id).textContent = "";
+            }
+        });
+        rutInput.addEventListener("blur", validarCampoRut);
+    }
+
+    // 2. Formateo y Validación de Teléfono Chileno (+56 9 1111 1111 o fijo +56 2 2111 1111)
+    function formatearTelefonoChileno(valor) {
+        let digitos = valor.replace(/\D/g, "");
+        if (digitos.startsWith("56")) {
+            digitos = digitos.slice(2);
+        }
+        digitos = digitos.slice(0, 9);
+        if (digitos.length === 0) return "";
+        if (digitos.length === 1) return `+56 ${digitos}`;
+        if (digitos.length <= 5) return `+56 ${digitos.slice(0, 1)} ${digitos.slice(1)}`;
+        return `+56 ${digitos.slice(0, 1)} ${digitos.slice(1, 5)} ${digitos.slice(5, 9)}`;
+    }
+
+    function validarCampoTelefono() {
+        if (!telInput) return true;
+        const valor = telInput.value.trim();
+        if (!valor) {
+            return mostrarError(telInput, "Este campo es obligatorio.");
+        }
+        const patronChileno = /^\+56 [2-9] \d{4} \d{4}$/;
+        if (!patronChileno.test(valor)) {
+            return mostrarError(
+                telInput,
+                "Ingrese un teléfono chileno válido: móvil (+56 9 1111 1111) o fijo (+56 2 2111 1111)."
+            );
+        }
+        return mostrarError(telInput, "");
+    }
+
+    if (telInput) {
+        telInput.addEventListener("focus", function (e) {
+            if (!e.target.value.trim()) {
+                e.target.value = "+56 ";
+            }
+        });
+        telInput.addEventListener("input", function (e) {
+            e.target.value = formatearTelefonoChileno(e.target.value);
+            if (e.target.value.length === 15) {
+                validarCampoTelefono();
+            } else {
+                telInput.classList.remove("is-invalid", "is-valid");
+                document.getElementById("error_" + telInput.id).textContent = "";
+            }
+        });
+        telInput.addEventListener("blur", function (e) {
+            if (e.target.value.trim() === "+56") e.target.value = "";
+            validarCampoTelefono();
+        });
+    }
+
+    // 3. Validación de Correo Electrónico en vivo
+    function validarCampoEmail() {
+        if (!emailInput) return true;
+        const valor = emailInput.value.trim();
+        if (!valor) {
+            return mostrarError(emailInput, "Este campo es obligatorio.");
+        }
+        const patronEmail = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+        if (!patronEmail.test(valor)) {
+            return mostrarError(emailInput, "Ingrese un correo electrónico válido (Ej: nombre@seguridadltda.cl).");
+        }
+        return mostrarError(emailInput, "");
+    }
+
+    if (emailInput) {
+        emailInput.addEventListener("input", function () {
+            if (emailInput.classList.contains("is-invalid") || emailInput.value.includes("@")) {
+                validarCampoEmail();
+            }
+        });
+        emailInput.addEventListener("blur", validarCampoEmail);
+    }
+
+    // 4. Validación instantánea al salir de cualquier otro campo obligatorio
+    const todosLosCampos = form.querySelectorAll("input, select, textarea");
+    todosLosCampos.forEach(function (campo) {
+        if ([rutInput, telInput, emailInput].includes(campo)) return;
+
+        campo.addEventListener("blur", function () {
+            if (campo.hasAttribute("required") && !campo.value.trim()) {
+                mostrarError(campo, "Este campo es obligatorio.");
+            } else {
+                mostrarError(campo, "");
+            }
+        });
+
+        campo.addEventListener("change", function () {
+            if (campo.hasAttribute("required") && campo.value.trim()) {
+                mostrarError(campo, "");
+            }
+        });
+    });
+
+    // 5. Bloqueo de envío si algún campo tiene error
+    form.addEventListener("submit", function (e) {
+        let formularioValido = true;
+        if (!validarCampoRut()) formularioValido = false;
+        if (!validarCampoTelefono()) formularioValido = false;
+        if (!validarCampoEmail()) formularioValido = false;
+
+        todosLosCampos.forEach(function (campo) {
+            if ([rutInput, telInput, emailInput].includes(campo)) return;
+            if (campo.hasAttribute("required") && !campo.value.trim()) {
+                mostrarError(campo, "Este campo es obligatorio.");
+                formularioValido = false;
+            }
+        });
+
+        if (!formularioValido) {
+            e.preventDefault();
+            const primerInvalido = form.querySelector(".is-invalid");
+            if (primerInvalido) primerInvalido.focus();
+        }
+    });
+});
+</script>
+{% endblock %}

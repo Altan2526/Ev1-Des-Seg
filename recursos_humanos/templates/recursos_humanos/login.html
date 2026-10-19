@@ -1,0 +1,32 @@
+{% extends 'recursos_humanos/base.html' %}
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-4">
+        <div class="card shadow">
+            <div class="card-header bg-dark text-white text-center py-3">
+                <h5 class="mb-0">Acceso Módulo RRHH</h5>
+                <small>ERP Seguridad LTDA</small>
+            </div>
+            <div class="card-body p-4">
+                {% if form.errors %}
+                    <div class="alert alert-danger small py-2">
+                        Credenciales inválidas. Por favor, intenta nuevamente.
+                    </div>
+                {% endif %}
+                <form method="post" action="{% url 'login' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="id_username" class="form-label fw-bold">Usuario</label>
+                        <input type="text" name="username" id="id_username" class="form-control" required autofocus>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_password" class="form-label fw-bold">Contraseña</label>
+                        <input type="password" name="password" id="id_password" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Iniciar Sesión</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
