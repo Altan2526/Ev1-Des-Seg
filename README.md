@@ -120,7 +120,7 @@ Con estos datos ya no necesitas ejecutar `python manage.py createsuperuser` cada
 
 ### Recargar los datos desde cero (opcional)
 
-Si ya tenés datos en la base y querés empezar limpio con el fixture:
+Si ya tienes datos en la base y quieres empezar limpio con el fixture:
 
 ```bash
 python manage.py flush --no-input
