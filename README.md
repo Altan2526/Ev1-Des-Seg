@@ -116,7 +116,7 @@ Django localizará automáticamente el archivo en `recursos_humanos/fixtures/dat
 | **Usuario** | `admin_rrhh`                |
 | **Contraseña** | `AdminRrhh2026!`          |
 
-Con estos datos ya no necesitas ejecutar `python manage.py createsuperuser` cada vez que configurás el entorno desde cero.
+Con estos datos ya no necesitas ejecutar `python manage.py createsuperuser` cada vez que configures el entorno desde cero.
 
 ### Recargar los datos desde cero (opcional)
 
