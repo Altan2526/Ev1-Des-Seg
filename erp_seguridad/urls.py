@@ -7,10 +7,19 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('', RedirectView.as_view(url='/rrhh/', permanent=False)),
+    
+    # Login principal
     path('login/', auth_views.LoginView.as_view(
         template_name='recursos_humanos/login.html',
         redirect_authenticated_user=True
     ), name='login'),
+    
+    # NUEVA LÍNEA: Soluciona el error 404 buscando rrhh/login/
+    path('rrhh/login/', auth_views.LoginView.as_view(
+        template_name='recursos_humanos/login.html',
+        redirect_authenticated_user=True
+    ), name='rrhh_login'),
+
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('admin/', admin.site.urls),
     path('rrhh/', include('recursos_humanos.urls')),
