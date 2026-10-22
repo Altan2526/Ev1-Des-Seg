@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Finiquito de Contrato de Trabajo</title>
+    <style>
+        @page {
+            size: letter;
+            margin: 2cm 2cm 2cm 2cm;
+            @bottom-right {
+                content: "Página " counter(page) " de " counter(pages);
+                font-size: 8pt;
+            }
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            line-height: 1.4;
+            color: #222;
+        }
+        .header {
+            text-align: center;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 8px;
+        }
+        .parrafo {
+            margin-bottom: 10px;
+            text-align: justify;
+        }
+        .datos-laborales {
+            margin: 12px 0;
+            padding: 8px 12px;
+            background-color: #f7f7f7;
+            border-left: 4px solid #333;
+            font-size: 9.5pt;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            border: 1px solid #999;
+            padding: 6px 8px;
+            font-size: 9pt;
+        }
+        th {
+            background-color: #e6e6e6;
+            text-align: left;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .total-row {
+            font-weight: bold;
+            background-color: #f0f0f0;
+        }
+        .firmas {
+            margin-top: 50px;
+            width: 100%;
+        }
+        .firma-box {
+            display: inline-block;
+            width: 45%;
+            text-align: center;
+            border-top: 1px solid #000;
+            padding-top: 4px;
+            font-size: 9pt;
+        }
+        .ministro-fe {
+            margin-top: 35px;
+            text-align: center;
+            font-size: 8.5pt;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h3>Finiquito de Contrato de Trabajo</h3>
+    </div>
+
+    <p class="parrafo">
+        En {{ fecha_emision|date:"d/m/Y" }}, comparecen don/doña <strong>{{ empresa.representante_legal }}</strong>, 
+        en representación de <strong>{{ empresa.razon_social }}</strong>, RUT <strong>{{ empresa.rut }}</strong>, con domicilio en 
+        {{ empresa.direccion }}, en adelante el "Empleador", y don/doña <strong>{{ colaborador.nombre_completo }}</strong>, 
+        RUT <strong>{{ colaborador.rut }}</strong>, con domicilio en {{ colaborador.direccion }}, en adelante el "Trabajador", quienes 
+        acuerdan suscribir el presente Finiquito de Contrato de Trabajo conforme a las siguientes estipulaciones:
+    </p>
+
+    <div class="datos-laborales">
+        <strong>Fecha de Inicio:</strong> {{ colaborador.fecha_ingreso|date:"d/m/Y" }}<br>
+        <strong>Fecha de Término:</strong> {{ finiquito.fecha_termino|date:"d/m/Y" }}<br>
+        <strong>Cargo:</strong> {{ colaborador.cargo }}<br>
+        <strong>Causal de Despido / Término:</strong> {{ finiquito.causal_termino }}
+    </div>
+
+    <p class="parrafo">
+        <strong>PRIMERO - DESGLOSE DE HABERES E INDEMNIZACIONES:</strong><br>
+        El Empleador hace entrega al Trabajador de la liquidación y pago de las siguientes sumas por concepto de término de relación laboral:
+    </p>
+
+    <!-- Tabla con el detalle monetario -->
+    <table>
+        <thead>
+            <tr>
+                <th>Concepto / Detalle</th>
+                <th class="text-right" style="width: 120px;">Monto ($)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Indemnización por Años de Servicio</td>
+                <td class="text-right">${{ finiquito.monto_anos_servicio|default:"0" }}</td>
+            </tr>
+            <tr>
+                <td>Indemnización Sustitutiva de Aviso Previo</td>
+                <td class="text-right">${{ finiquito.monto_aviso_previo|default:"0" }}</td>
+            </tr>
+            <tr>
+                <td>Feriado Legal Proporcional (Vacaciones Pendientes)</td>
+                <td class="text-right">${{ finiquito.monto_feriado_proporcional|default:"0" }}</td>
+            </tr>
+            <tr>
+                <td>Remuneración Pendiente (Días trabajados del mes)</td>
+                <td class="text-right">${{ finiquito.monto_dias_pendientes|default:"0" }}</td>
+            </tr>
+            <tr class="total-row">
+                <td>TOTAL LÍQUIDO A PAGAR</td>
+                <td class="text-right">${{ finiquito.total_a_pagar }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p class="parrafo">
+        <strong>SEGUNDO - DECLARACIÓN Y CONFORMIDAD:</strong><br>
+        El Trabajador declara haber recibido a su entera satisfacción los importes detallados, 
+        otorgando amplio y total finiquito al Empleador, manifestando que no se le adeuda suma alguna por 
+        concepto de remuneraciones, cotizaciones previsionales, horas extras ni indemnizaciones de ninguna naturaleza.
+    </p>
+
+    <!-- Sección de Firmas -->
+    <div class="firmas">
+        <div class="firma-box" style="float: left;">
+            {{ empresa.representante_legal }}<br>
+            <strong>Por el Empleador</strong><br>
+            RUT: {{ empresa.rut }}
+        </div>
+        <div class="firma-box" style="float: right;">
+            {{ colaborador.nombre_completo }}<br>
+            <strong>Trabajador</strong><br>
+            RUT: {{ colaborador.rut }}
+        </div>
+    </div>
+
+    <div style="clear: both;"></div>
+
+    <div class="ministro-fe">
+        <p>Ratificado y firmado ante mí / Ministro de Fe / Notaría Pública / Inspección del Trabajo</p>
+    </div>
+
+</body>
+</html>

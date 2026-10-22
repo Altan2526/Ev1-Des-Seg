@@ -1,0 +1,155 @@
+{% extends 'recursos_humanos/base.html' %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="fw-bold mb-1">Contratos y Finiquitos</h2>
+        <p class="text-muted mb-0 small">Emisión y automatización de documentación laboral (Historia EV1DS-10)</p>
+    </div>
+    <!-- Descarga Masiva -->
+    <form method="post" action="{% url 'descargar_documentos_masivos' %}" class="d-inline">
+        {% csrf_token %}
+        <input type="hidden" name="tipo" value="contrato">
+        {% for emp in empleados %}
+            <input type="hidden" name="empleados_ids" value="{{ emp.id }}">
+        {% endfor %}
+        <button type="submit" class="btn btn-success shadow-sm">
+            📦 Descargar Contratos Masivos (.ZIP)
+        </button>
+    </form>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>RUT</th>
+                    <th>Nombre Completo</th>
+                    <th>Cargo</th>
+                    <th>Centro de Costo</th>
+                    <th class="text-center" style="width: 220px;">Documentos</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for emp in empleados %}
+                <tr>
+                    <td class="fw-bold text-nowrap">{{ emp.rut }}</td>
+                    <td>{{ emp.nombre_completo }}</td>
+                    <td>{{ emp.cargo }}</td>
+                    <td><span class="badge bg-info text-dark">{{ emp.get_centro_costo_display }}</span></td>
+                    <td class="text-center">
+                        <div class="d-inline-flex gap-2">
+                            <!-- Botón Modal Contrato -->
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalContrato{{ emp.pk }}">
+                                📄 Contrato
+                            </button>
+
+                            <!-- Botón Modal Finiquito -->
+                            <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#modalFiniquito{{ emp.pk }}">
+                                📑 Finiquito
+                            </button>
+                        </div>
+
+                        <!-- MODAL: CREAR CONTRATO -->
+                        <div class="modal fade" id="modalContrato{{ emp.pk }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <form method="POST" action="{% url 'descargar_documento_individual' 'contrato' emp.pk %}">
+                                        {% csrf_token %}
+                                        <div class="modal-header bg-primary text-white">
+                                            <h5 class="modal-title fs-6">Crear Contrato: {{ emp.nombre_completo }}</h5>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body text-start">
+                                            <div class="mb-3">
+                                                <label class="form-label fw-bold">Tipo de Contrato</label>
+                                                <select name="tipo_contrato" class="form-select form-select-sm">
+                                                    <option value="Plazo Indefinido" selected>Plazo Indefinido</option>
+                                                    <option value="Plazo Fijo">Plazo Fijo</option>
+                                                    <option value="Por Obra o Faena">Por Obra o Faena</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label fw-bold">Sueldo Base Mensual ($)</label>
+                                                <input type="number" name="sueldo_base" class="form-control form-control-sm" value="650000" min="0" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label fw-bold">Jornada Semanal</label>
+                                                <input type="text" name="jornada" class="form-control form-control-sm" value="40 horas semanales">
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                            <button type="submit" class="btn btn-sm btn-primary fw-bold">Descargar Contrato PDF</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- MODAL: CREAR FINIQUITO -->
+                        <div class="modal fade" id="modalFiniquito{{ emp.pk }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <form method="POST" action="{% url 'descargar_documento_individual' 'finiquito' emp.pk %}">
+                                        {% csrf_token %}
+                                        <div class="modal-header bg-dark text-white">
+                                            <h5 class="modal-title fs-6">Crear Finiquito: {{ emp.nombre_completo }}</h5>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body text-start">
+                                            <div class="mb-3">
+                                                <label class="form-label fw-bold">Causal de Despido / Término *</label>
+                                                <select name="causal" class="form-select form-select-sm" required>
+                                                    <option value="Artículo 161 Inciso 1: Necesidades de la Empresa" selected>Art. 161 Inc. 1: Necesidades de la Empresa</option>
+                                                    <option value="Artículo 159 N° 1: Mutuo Acuerdo de las Partes">Art. 159 N° 1: Mutuo Acuerdo</option>
+                                                    <option value="Artículo 159 N° 2: Renuncia Voluntaria del Trabajador">Art. 159 N° 2: Renuncia Voluntaria</option>
+                                                    <option value="Artículo 159 N° 4: Vencimiento del Plazo Convenido">Art. 159 N° 4: Vencimiento del Plazo</option>
+                                                    <option value="Artículo 160: Conductas indebidas graves (Sin indemnización)">Art. 160: Despido Justificado (Falta grave)</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label fw-bold">Fecha de Término</label>
+                                                <input type="date" name="fecha_termino" class="form-control form-control-sm" required>
+                                            </div>
+                                            <div class="row g-2">
+                                                <div class="col-6">
+                                                    <label class="form-label small">Años de Servicio ($)</label>
+                                                    <input type="number" name="monto_anos" class="form-control form-control-sm" value="0">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label small">Mes de Aviso ($)</label>
+                                                    <input type="number" name="monto_aviso" class="form-control form-control-sm" value="0">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label small">Vacaciones Pendientes ($)</label>
+                                                    <input type="number" name="monto_feriado" class="form-control form-control-sm" value="150000">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label small">Días Pendientes ($)</label>
+                                                    <input type="number" name="monto_pendientes" class="form-control form-control-sm" value="200000">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                            <button type="submit" class="btn btn-sm btn-danger fw-bold">Descargar Finiquito PDF</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">No hay colaboradores registrados.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

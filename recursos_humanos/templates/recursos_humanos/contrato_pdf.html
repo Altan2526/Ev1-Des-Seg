@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Contrato de Trabajo</title>
+    <style>
+        @page {
+            size: letter;
+            margin: 2.5cm 2cm 2.5cm 2cm;
+            @bottom-right {
+                content: "Página " counter(page) " de " counter(pages);
+                font-size: 9pt;
+            }
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11pt;
+            line-height: 1.5;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 25px;
+        }
+        .clausula {
+            margin-bottom: 12px;
+            text-align: justify;
+        }
+        .firmas {
+            margin-top: 60px;
+            width: 100%;
+        }
+        .firma-box {
+            display: inline-block;
+            width: 45%;
+            text-align: center;
+            border-top: 1px solid #000;
+            padding-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>Contrato Individual de Trabajo</h2>
+    </div>
+    <p class="clausula">
+        En {{ fecha_emision|date:"d/m/Y" }}, entre <strong>{{ empresa.razon_social }}</strong>, 
+        RUT {{ empresa.rut }}, representada por {{ empresa.representante_legal }}, en adelante el "Empleador", y 
+        don/doña <strong>{{ colaborador.nombre_completo }}</strong>, RUT {{ colaborador.rut }}, 
+        domiciliado en {{ colaborador.direccion }}, en adelante el "Trabajador", se ha convenido lo siguiente:
+    </p>
+    <p class="clausula">
+        <strong>PRIMERO:</strong> El Trabajador prestará servicios en el cargo de <strong>{{ colaborador.cargo }}</strong>, 
+        cumpliendo funciones correspondientes al departamento de <strong>{{ colaborador.departamento }}</strong>.
+    </p>
+    <p class="clausula">
+        <strong>SEGUNDO:</strong> El Empleador pagará al Trabajador una remuneración mensual bruta de 
+        <strong>${{ colaborador.sueldo_base }}</strong>.
+    </p>
+    <div class="firmas">
+        <div class="firma-box" style="float: left;">
+            {{ empresa.representante_legal }}<br>
+            <strong>Empleador</strong>
+        </div>
+        <div class="firma-box" style="float: right;">
+            {{ colaborador.nombre_completo }}<br>
+            <strong>Trabajador (RUT: {{ colaborador.rut }})</strong>
+        </div>
+    </div>
+</body>
+</html>

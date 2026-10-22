@@ -179,7 +179,6 @@ class CargaFamiliar(models.Model):
         return f"{self.nombre_completo} ({self.get_parentesco_display()} de {self.empleado.rut})"
 
 
-
 class RegistroAuditoria(models.Model):
     ACCION_CHOICES = [
         ('CREAR', 'Creación'),
@@ -207,3 +206,36 @@ class RegistroAuditoria(models.Model):
     def __str__(self):
         user_str = self.usuario.username if self.usuario else "Sistema"
         return f"[{self.fecha_hora:%d/%m/%Y %H:%M}] {user_str} - {self.accion} en {self.entidad}"
+
+
+# =====================================================================
+# NUEVO MODELO PARA TRAZABILIDAD DE CONTRATOS Y FINIQUITOS
+# =====================================================================
+class DocumentoEmitido(models.Model):
+    TIPO_CHOICES = [
+        ('CONTRATO', 'Contrato de Trabajo'),
+        ('FINIQUITO', 'Finiquito'),
+    ]
+
+    empleado = models.ForeignKey(
+        Empleado,
+        on_delete=models.CASCADE,
+        related_name='documentos_emitidos',
+        verbose_name="Empleado"
+    )
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, verbose_name="Tipo de Documento")
+    emitido_por = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name="Emitido por (Usuario)"
+    )
+    fecha_emision = models.DateTimeField(auto_now_add=True, verbose_name="Fecha y Hora de Emisión")
+
+    class Meta:
+        ordering = ['-fecha_emision']
+        verbose_name = "Documento Emitido"
+        verbose_name_plural = "Documentos Emitidos"
+
+    def __str__(self):
+        return f"{self.get_tipo_display()} - {self.empleado.rut} ({self.fecha_emision:%d/%m/%Y %H:%M})"
