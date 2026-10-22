@@ -1,0 +1,372 @@
+[
+  {
+    "model": "auth.user",
+    "pk": 1,
+    "fields": {
+      "username": "admin_rrhh",
+      "first_name": "María",
+      "last_name": "Rojas",
+      "email": "maria.rojas@seguridadltda.cl",
+      "is_staff": true,
+      "is_active": true,
+      "is_superuser": true,
+      "password": "pbkdf2_sha256$1500000$almI5pGaR7EqwHWXYXFVIm$McBdyzaHnXnsdocNeymrPoEASic2wx7d43gcYJpdvrE=",
+      "last_login": "2026-10-22T10:00:00Z",
+      "date_joined": "2026-10-15T10:00:00Z",
+      "user_permissions": [],
+      "groups": []
+    }
+  },
+  {
+    "model": "recursos_humanos.empleado",
+    "pk": 1,
+    "fields": {
+      "rut": "12.345.678-5",
+      "primer_nombre": "María",
+      "segundo_nombre": "Fernanda",
+      "apellido_paterno": "Rojas",
+      "apellido_materno": "Silva",
+      "fecha_nacimiento": "1990-03-15",
+      "direccion": "Av. Siempre Viva 1234, Santiago",
+      "telefono": "+56 9 8765 4321",
+      "email": "maria.rojas@seguridadltda.cl",
+      "cargo": "Gerente de Recursos Humanos",
+      "centro_costo": "CC-200",
+      "tipo_contrato": "INDEFINIDO",
+      "fecha_ingreso": "2020-05-10",
+      "prevision": "FONASA",
+      "afp": "PROVIDA",
+      "codigo_reloj_control": "RC-0001",
+      "fotografia": "",
+      "curriculum": "",
+      "creado_en": "2026-10-20T10:00:00Z",
+      "actualizado_en": "2026-10-20T10:00:00Z"
+    }
+  },
+  {
+    "model": "recursos_humanos.empleado",
+    "pk": 2,
+    "fields": {
+      "rut": "15.678.910-0",
+      "primer_nombre": "Carlos",
+      "segundo_nombre": "",
+      "apellido_paterno": "Méndez",
+      "apellido_materno": "Pérez",
+      "fecha_nacimiento": "1985-11-22",
+      "direccion": "Calle Los Alamos 567, La Reina, Santiago",
+      "telefono": "+56 9 1234 5678",
+      "email": "carlos.mendez@seguridadltda.cl",
+      "cargo": "Analista de Sistemas Senior",
+      "centro_costo": "CC-600",
+      "tipo_contrato": "INDEFINIDO",
+      "fecha_ingreso": "2018-09-01",
+      "prevision": "FONASA",
+      "afp": "CUPRUM",
+      "codigo_reloj_control": "RC-0002",
+      "fotografia": "",
+      "curriculum": "",
+      "creado_en": "2026-10-20T10:00:00Z",
+      "actualizado_en": "2026-10-20T10:00:00Z"
+    }
+  },
+  {
+    "model": "recursos_humanos.empleado",
+    "pk": 3,
+    "fields": {
+      "rut": "18.765.432-7",
+      "primer_nombre": "Ana",
+      "segundo_nombre": "Isabel",
+      "apellido_paterno": "Torres",
+      "apellido_materno": "Ramírez",
+      "fecha_nacimiento": "1992-07-08",
+      "direccion": "Jr. Las Gardenias 890, Ñuñoa, Santiago",
+      "telefono": "+56 2 2345 6789",
+      "email": "ana.torres@seguridadltda.cl",
+      "cargo": "Contadora Auditora",
+      "centro_costo": "CC-100",
+      "tipo_contrato": "PLAZO_FIJO",
+      "fecha_ingreso": "2021-03-15",
+      "prevision": "ISAPRE",
+      "afp": "HABITAT",
+      "codigo_reloj_control": "RC-0003",
+      "fotografia": "",
+      "curriculum": "",
+      "creado_en": "2026-10-20T10:00:00Z",
+      "actualizado_en": "2026-10-20T10:00:00Z"
+    }
+  },
+  {
+    "model": "recursos_humanos.empleado",
+    "pk": 4,
+    "fields": {
+      "rut": "20.345.678-6",
+      "primer_nombre": "Luis",
+      "segundo_nombre": "",
+      "apellido_paterno": "Gómez",
+      "apellido_materno": "Vargas",
+      "fecha_nacimiento": "1998-01-30",
+      "direccion": "Av. Libertador Bernardo O'Higgins 100, Santiago",
+      "telefono": "+56 9 9876 5432",
+      "email": "luis.gomez@seguridadltda.cl",
+      "cargo": "Jefe de Bodega e Inventario",
+      "centro_costo": "CC-400",
+      "tipo_contrato": "INDEFINIDO",
+      "fecha_ingreso": "2019-06-20",
+      "prevision": "FONASA",
+      "afp": "CAPITAL",
+      "codigo_reloj_control": "RC-0004",
+      "fotografia": "",
+      "curriculum": "",
+      "creado_en": "2026-10-20T10:00:00Z",
+      "actualizado_en": "2026-10-20T10:00:00Z"
+    }
+  },
+  {
+    "model": "recursos_humanos.empleado",
+    "pk": 5,
+    "fields": {
+      "rut": "22.456.789-8",
+      "primer_nombre": "Patricia",
+      "segundo_nombre": "Andrea",
+      "apellido_paterno": "López",
+      "apellido_materno": "Sánchez",
+      "fecha_nacimiento": "1988-04-12",
+      "direccion": "Calle Los Olivos 234, Puente Alto, Santiago",
+      "telefono": "+56 9 5555 6677",
+      "email": "patricia.lopez@seguridadltda.cl",
+      "cargo": "Coordinadora de Ventas",
+      "centro_costo": "CC-500",
+      "tipo_contrato": "PLAZO_FIJO",
+      "fecha_ingreso": "2022-10-01",
+      "prevision": "FONASA",
+      "afp": "MODELO",
+      "codigo_reloj_control": "RC-0005",
+      "fotografia": "",
+      "curriculum": "",
+      "creado_en": "2026-10-20T10:00:00Z",
+      "actualizado_en": "2026-10-20T10:00:00Z"
+    }
+  },
+  {
+    "model": "recursos_humanos.empleado",
+    "pk": 6,
+    "fields": {
+      "rut": "25.678.901-9",
+      "primer_nombre": "Jorge",
+      "segundo_nombre": "",
+      "apellido_paterno": "Castro",
+      "apellido_materno": "Mora",
+      "fecha_nacimiento": "2000-09-25",
+      "direccion": "Av. Departamental 456, San Bernardo, Santiago",
+      "telefono": "+56 2 2456 7890",
+      "email": "jorge.castro@seguridadltda.cl",
+      "cargo": "Operario de Terreno",
+      "centro_costo": "CC-300",
+      "tipo_contrato": "POR_OBRA",
+      "fecha_ingreso": "2023-08-15",
+      "prevision": "FONASA",
+      "afp": "UNO",
+      "codigo_reloj_control": "RC-0006",
+      "fotografia": "",
+      "curriculum": "",
+      "creado_en": "2026-10-20T10:00:00Z",
+      "actualizado_en": "2026-10-20T10:00:00Z"
+    }
+  },
+  {
+    "model": "recursos_humanos.empleado",
+    "pk": 7,
+    "fields": {
+      "rut": "27.890.123-8",
+      "primer_nombre": "Sofía",
+      "segundo_nombre": "",
+      "apellido_paterno": "Díaz",
+      "apellido_materno": "Rojas",
+      "fecha_nacimiento": "1995-06-14",
+      "direccion": "Calle Los Sauces 789, La Florida, Santiago",
+      "telefono": "+56 9 3333 4444",
+      "email": "sofia.diaz@seguridadltda.cl",
+      "cargo": "Asistente de Oficina",
+      "centro_costo": "CC-100",
+      "tipo_contrato": "INDEFINIDO",
+      "fecha_ingreso": "2017-11-01",
+      "prevision": "FONASA",
+      "afp": "PLANVITAL",
+      "codigo_reloj_control": "RC-0007",
+      "fotografia": "",
+      "curriculum": "",
+      "creado_en": "2026-10-20T10:00:00Z",
+      "actualizado_en": "2026-10-20T10:00:00Z"
+    }
+  },
+  {
+    "model": "recursos_humanos.cargafamiliar",
+    "pk": 1,
+    "fields": {
+      "empleado": 1,
+      "rut_carga": "12.345.678-5",
+      "primer_nombre": "Pedro",
+      "segundo_nombre": "",
+      "apellido_paterno": "Rojas",
+      "apellido_materno": "Silva",
+      "fecha_nacimiento": "2015-06-10",
+      "parentesco": "HIJO"
+    }
+  },
+  {
+    "model": "recursos_humanos.cargafamiliar",
+    "pk": 2,
+    "fields": {
+      "empleado": 1,
+      "rut_carga": "12.345.678-5",
+      "primer_nombre": "Lucía",
+      "segundo_nombre": "",
+      "apellido_paterno": "Rojas",
+      "apellido_materno": "Silva",
+      "fecha_nacimiento": "2018-02-20",
+      "parentesco": "HIJO"
+    }
+  },
+  {
+    "model": "recursos_humanos.cargafamiliar",
+    "pk": 3,
+    "fields": {
+      "empleado": 2,
+      "rut_carga": "15.678.910-0",
+      "primer_nombre": "María",
+      "segundo_nombre": "",
+      "apellido_paterno": "Pérez",
+      "apellido_materno": "López",
+      "fecha_nacimiento": "1960-04-05",
+      "parentesco": "CONYUGE"
+    }
+  },
+  {
+    "model": "recursos_humanos.cargafamiliar",
+    "pk": 4,
+    "fields": {
+      "empleado": 4,
+      "rut_carga": "20.345.678-6",
+      "primer_nombre": "Diego",
+      "segundo_nombre": "",
+      "apellido_paterno": "Gómez",
+      "apellido_materno": "Vargas",
+      "fecha_nacimiento": "2010-09-12",
+      "parentesco": "HIJO"
+    }
+  },
+  {
+    "model": "recursos_humanos.cargafamiliar",
+    "pk": 5,
+    "fields": {
+      "empleado": 5,
+      "rut_carga": "22.456.789-8",
+      "primer_nombre": "Andrés",
+      "segundo_nombre": "",
+      "apellido_paterno": "López",
+      "apellido_materno": "Sánchez",
+      "fecha_nacimiento": "1988-11-30",
+      "parentesco": "CONYUGE"
+    }
+  },
+  {
+    "model": "recursos_humanos.cargafamiliar",
+    "pk": 6,
+    "fields": {
+      "empleado": 5,
+      "rut_carga": "22.456.789-8",
+      "primer_nombre": "Valentina",
+      "segundo_nombre": "",
+      "apellido_paterno": "López",
+      "apellido_materno": "Sánchez",
+      "fecha_nacimiento": "2016-08-18",
+      "parentesco": "HIJO"
+    }
+  },
+  {
+    "model": "recursos_humanos.cargafamiliar",
+    "pk": 7,
+    "fields": {
+      "empleado": 7,
+      "rut_carga": "27.890.123-8",
+      "primer_nombre": "Camila",
+      "segundo_nombre": "",
+      "apellido_paterno": "Díaz",
+      "apellido_materno": "Rojas",
+      "fecha_nacimiento": "2019-03-25",
+      "parentesco": "HIJO"
+    }
+  },
+  {
+    "model": "recursos_humanos.registroauditoria",
+    "pk": 1,
+    "fields": {
+      "usuario": 1,
+      "accion": "CREAR",
+      "entidad": "Ficha de Empleado",
+      "detalle": "Se creó la ficha de María Fernanda Rojas Silva (RUT: 12.345.678-5).",
+      "ip_origen": "127.0.0.1",
+      "fecha_hora": "2026-10-20T10:00:00Z"
+    }
+  },
+  {
+    "model": "recursos_humanos.registroauditoria",
+    "pk": 2,
+    "fields": {
+      "usuario": 1,
+      "accion": "CREAR",
+      "entidad": "Ficha de Empleado",
+      "detalle": "Se creó la ficha de Carlos Méndez Pérez (RUT: 15.678.910-0).",
+      "ip_origen": "127.0.0.1",
+      "fecha_hora": "2026-10-21T10:00:00Z"
+    }
+  },
+  {
+    "model": "recursos_humanos.registroauditoria",
+    "pk": 3,
+    "fields": {
+      "usuario": 1,
+      "accion": "CREAR",
+      "entidad": "Ficha de Empleado",
+      "detalle": "Se creó la ficha de Ana Isabel Torres Ramírez (RUT: 18.765.432-7).",
+      "ip_origen": "127.0.0.1",
+      "fecha_hora": "2026-10-22T10:00:00Z"
+    }
+  },
+  {
+    "model": "recursos_humanos.registroauditoria",
+    "pk": 4,
+    "fields": {
+      "usuario": 1,
+      "accion": "CREAR",
+      "entidad": "Carga Familiar",
+      "detalle": "Se registró la carga Pedro Rojas Silva (Hijo/a) para el empleado 12.345.678-5.",
+      "ip_origen": "127.0.0.1",
+      "fecha_hora": "2026-10-23T10:00:00Z"
+    }
+  },
+  {
+    "model": "recursos_humanos.registroauditoria",
+    "pk": 5,
+    "fields": {
+      "usuario": 1,
+      "accion": "EDITAR",
+      "entidad": "Ficha de Empleado",
+      "detalle": "Se actualizaron los datos de Patricia Andrea López Sánchez (RUT: 22.456.789-8).",
+      "ip_origen": "127.0.0.1",
+      "fecha_hora": "2026-10-24T10:00:00Z"
+    }
+  },
+  {
+    "model": "recursos_humanos.registroauditoria",
+    "pk": 6,
+    "fields": {
+      "usuario": 1,
+      "accion": "CREAR",
+      "entidad": "Ficha de Empleado",
+      "detalle": "Se creó la ficha de Sofía Díaz Rojas (RUT: 27.890.123-8).",
+      "ip_origen": "127.0.0.1",
+      "fecha_hora": "2026-10-25T10:00:00Z"
+    }
+  }
+]

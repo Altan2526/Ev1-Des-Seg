@@ -64,7 +64,9 @@ Por políticas de seguridad DevSecOps, las claves secretas no se suben al reposi
 
 ## 3. Base de Datos y Creación del Primer Usuario
 
-Como el archivo de base de datos local (`db.sqlite3`) está excluido en el `.gitignore` por seguridad, **cada integrante debe inicializar su propia base de datos local y su usuario administrador** al descargar el proyecto.
+Como el archivo de base de datos local (`db.sqlite3`) está excluido en el `.gitignore` por seguridad, **cada integrante debe inicializar su propia base de datos local** al descargar el proyecto.
+
+> **Nota:** El proyecto incluye un **fixture de datos de ejemplo** (`datos_iniciales`) que ya contiene un usuario administrador listo para usar. Si cargas el fixture (ver [Sección 4](#4-carga-de-datos-de-ejemplo-fixture)](#4-carga-de-datos-de-ejemplo-fixture)) puedes **omitir** la creación manual del usuario.
 
 ### Paso 1: Ejecutar las migraciones
 Genera y aplica las tablas del modelo de datos (`Empleado`, `CargaFamiliar` y tablas de sesión de Django) ejecutando:
@@ -88,7 +90,57 @@ La terminal te solicitará los siguientes datos de forma interactiva:
 
 ---
 
-## 4. Arranque del Servidor y Pruebas de Funcionamiento
+## 4. Carga de Datos de Ejemplo (Fixture)
+
+El proyecto incluye un **archivo de datos ficticios** (`datos_iniciales.json`) que contiene:
+
+* **1 usuario administrador** (`admin_rrhh` / `AdminRrhh2026!`) con permisos de superuser.
+* **7 empleados** con RUTs chilenos válidos (verificados con Módulo 11), distribuidos en todos los centros de costo y tipos de contrato.
+* **7 cargas familiares** relacionadas a los empleados.
+* **6 registros de auditoría** simulando actividad previa.
+
+### Cómo cargar los datos
+
+Después de ejecutar las migraciones (y **opcionalmente** después de crear tu usuario administrador), puedes cargar los datos de ejemplo de una sola vez:
+
+```bash
+python manage.py loaddata datos_iniciales
+```
+
+Django localizará automáticamente el archivo en `recursos_humanos/fixtures/datos_iniciales.json` y cargará **21 registros** (1 usuario + 7 empleados + 7 cargas + 6 auditorías).
+
+### Credenciales de acceso con los datos de ejemplo
+
+| Campo       | Valor                       |
+|-------------|-----------------------------|
+| **Usuario** | `admin_rrhh`                |
+| **Contraseña** | `AdminRrhh2026!`          |
+
+Con estos datos ya no necesitas ejecutar `python manage.py createsuperuser` cada vez que configurás el entorno desde cero.
+
+### Recargar los datos desde cero (opcional)
+
+Si ya tenés datos en la base y querés empezar limpio con el fixture:
+
+```bash
+python manage.py flush --no-input
+python manage.py loaddata datos_iniciales
+```
+
+### Estructura del fixture
+
+```
+recursos_humanos/
+├── fixtures/
+│   └── datos_iniciales.json   # Archivo con datos ficticios
+├── migrations/
+├── models.py
+└── ...
+```
+
+---
+
+## 5. Arranque del Servidor y Pruebas de Funcionamiento
 
 ### 1. Iniciar el servidor de desarrollo
 Ejecuta el siguiente comando para levantar la aplicación:

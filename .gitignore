@@ -3,3 +3,16 @@ venv/
 __pycache__/
 db.sqlite3
 .env
+
+# SonarQube / Sonar
+.scannerwork/
+.sonar/
+*.sonar*
+sonar-project.properties
+coverage.xml
+.coverage
+.coverage.*
+htmlcov/
+coverage/
+.mypy_cache/
+.pytest_cache/
