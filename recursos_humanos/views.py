@@ -2,8 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods, require_safe, require_POST
 from django.contrib import messages
-from .models import Empleado, CargaFamiliar, RegistroAuditoria
-from .forms import EmpleadoForm, CargaFamiliarForm
+from .models import Empleado, CargaFamiliar, LicenciaMedica, RegistroAuditoria
+from .forms import EmpleadoForm, CargaFamiliarForm, LicenciaMedicaForm
 
 URL_LISTA_EMPLEADOS = 'lista_empleados'
 URL_DETALLE_EMPLEADO = 'detalle_empleado'
@@ -149,3 +149,40 @@ def bitacora_auditoria(request):
     """Muestra los últimos 100 registros de auditoría del sistema."""
     registros = RegistroAuditoria.objects.select_related('usuario').all()[:100]
     return render(request, 'recursos_humanos/bitacora.html', {'registros': registros})
+
+
+@login_required
+@require_safe
+def listar_licencias(request):
+    """Lista todas las licencias médicas registradas con trazabilidad."""
+    licencias = LicenciaMedica.objects.select_related('empleado', 'registrado_por').all()
+    return render(request, 'recursos_humanos/listar_licencias.html', {'licencias': licencias})
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def registrar_licencia(request):
+    """Registra una nueva licencia médica con registro de auditoría."""
+    if request.method == 'POST':
+        form = LicenciaMedicaForm(request.POST)
+        if form.is_valid():
+            licencia = form.save(commit=False)
+            licencia.registrado_por = request.user  # Mitiga Repudiation (EV1DS-17)
+            licencia.save()
+
+            registrar_log(
+                request,
+                accion='CREAR',
+                entidad='Licencia Médica',
+                detalle=f"Se registró licencia para {licencia.empleado.nombre_completo} (RUT: {licencia.empleado.rut})."
+            )
+            messages.success(request, f"Licencia médica para {licencia.empleado.nombre_completo} registrada correctamente.")
+            return redirect('listar_licencias')
+    else:
+        form = LicenciaMedicaForm()
+    
+    return render(request, 'recursos_humanos/registrar_licencias.html', {'form': form})
+
+
+# Alias de compatibilidad
+registrar_licencias = registrar_licencia
