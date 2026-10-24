@@ -1,4 +1,5 @@
 {% extends 'recursos_humanos/base.html' %}
+{% load recursos_humanos_tags %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
@@ -24,11 +25,13 @@
             <tbody>
                 {% for reg in registros %}
                 <tr>
-                    <td class="text-nowrap small">{{ reg.fecha_hora|date:"d/m/Y H:i:s" }}</td>
+                    <td class="text-nowrap small">{{ reg.fecha_hora|localtime|date:"d/m/Y H:i:s" }}</td>
                     <td class="fw-bold">{{ reg.usuario.username|default:"Sistema" }}</td>
                     <td>
                         {% if reg.accion == 'CREAR' %}
                             <span class="badge bg-success">CREACIÓN</span>
+                        {% elif reg.accion == 'MODIFICAR' %}
+                            <span class="badge bg-warning text-dark">MODIFICACIÓN</span>
                         {% elif reg.accion == 'EDITAR' %}
                             <span class="badge bg-warning text-dark">ACTUALIZACIÓN</span>
                         {% else %}

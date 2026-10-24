@@ -20,8 +20,8 @@
                 </a>
 
                 <!-- 2. Contratos y Finiquitos (Se ilumina en azul si estás en tu página) -->
-                <a class="nav-link {% if request.resolver_match.url_name == 'panel_documentos' %}text-info fw-bold active{% else %}text-white-50{% endif %}" 
-                   href="{% url 'panel_documentos' %}">
+                <a class="nav-link {% if request.resolver_match.url_name == 'gestion_documentos' %}text-info fw-bold active{% else %}text-white-50{% endif %}"
+                   href="{% url 'gestion_documentos' %}">
                    Contratos y Finiquitos
                 </a>
 

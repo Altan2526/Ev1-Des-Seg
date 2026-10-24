@@ -2,7 +2,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    # Rutas existentes de gestión de personal
+    # Rutas de gestión de personal
     path('', views.lista_empleados, name='lista_empleados'),
     path('nuevo/', views.crear_empleado, name='crear_empleado'),
     path('<int:pk>/', views.detalle_empleado, name='detalle_empleado'),
@@ -11,8 +11,8 @@ urlpatterns = [
     path('<int:empleado_pk>/cargas/<int:carga_pk>/eliminar/', views.eliminar_carga_familiar, name='eliminar_carga_familiar'),
     path('auditoria/', views.bitacora_auditoria, name='bitacora_auditoria'),
 
-    # Rutas de emisión de documentos (utilizadas por las ventanitas modales)
+    # Rutas de emisión de documentos (EV1DS-10)
+    path('documentos/', views.gestion_documentos, name='gestion_documentos'),
     path('documentos/<str:tipo>/<int:empleado_id>/', views.descargar_documento_individual, name='descargar_documento_individual'),
     path('documentos/masivo/', views.descargar_documentos_masivos, name='descargar_documentos_masivos'),
-    path('documentos/', views.panel_documentos, name='panel_documentos'),
 ]
