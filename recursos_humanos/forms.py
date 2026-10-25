@@ -1,12 +1,13 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import Empleado, CargaFamiliar
+from .models import Empleado, CargaFamiliar, Concepto
 from .validators import (
     limpiar_y_formatear_rut,
     validar_rut_chileno,
     limpiar_y_formatear_telefono,
     validar_telefono_chileno,
 )
+from .models import safe_eval_arithmetic
 
 
 class EmpleadoForm(forms.ModelForm):
@@ -105,3 +106,68 @@ class CargaFamiliarForm(forms.ModelForm):
         rut = limpiar_y_formatear_rut(self.cleaned_data.get('rut_carga', ''))
         validar_rut_chileno(rut)
         return rut
+
+
+# ---------------------------------------------------------------------------
+# EV1DS-06: Formularios de Conceptos Salariales
+# ---------------------------------------------------------------------------
+
+class ConceptoForm(forms.ModelForm):
+    """
+    Formulario para crear / actualizar conceptos salariales (haberes y
+    descuentos). Incluye validación estricta de la fórmula mediante
+    ``safe_eval_arithmetic`` (nunca ``eval()``).
+    """
+    class Meta:
+        model = Concepto
+        fields = [
+            'codigo', 'nombre', 'tipo', 'clasificacion',
+            'formula', 'monto_fijo', 'activo', 'es_legal',
+        ]
+        widgets = {
+            'codigo': forms.TextInput(attrs={
+                'class': 'form-control form-control-sm',
+                'placeholder': 'Ej: GRAT, BONO, AFP, SALUD',
+            }),
+            'nombre': forms.TextInput(attrs={
+                'class': 'form-control form-control-sm',
+                'placeholder': 'Ej: Gratificación, Bono Producción, AFP',
+            }),
+            'tipo': forms.Select(attrs={'class': 'form-select form-select-sm'}),
+            'clasificacion': forms.Select(attrs={'class': 'form-select form-select-sm'}),
+            'formula': forms.TextInput(attrs={
+                'class': 'form-control form-control-sm',
+                'placeholder': "Ej: sueldo_base * 0.10",
+            }),
+            'monto_fijo': forms.NumberInput(attrs={
+                'class': 'form-control form-control-sm', 'min': '0',
+            }),
+            'activo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'es_legal': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+    def clean_formula(self):
+        """
+        Valida que la fórmula solo contenga operaciones aritméticas básicas
+        y variables permitidas (sueldo_base). Nunca usa eval().
+        """
+        formula = self.cleaned_data.get('formula', '').strip()
+        if not formula:
+            return formula
+        # Variables permitidas en fórmulas
+        allowed_vars = {'sueldo_base', 'total_haberes', 'total_descuentos'}
+        try:
+            safe_eval_arithmetic(formula, {v: 1 for v in allowed_vars})
+        except ValueError as e:
+            raise ValidationError(
+                f"Fórmula inválida o no permitida: {e}. "
+                "Use solo números, operadores (+, -, *, /, %, **, //), "
+                "paréntesis y la variable 'sueldo_base'."
+            )
+        return formula
+
+    def clean_monto_fijo(self):
+        monto = self.cleaned_data.get('monto_fijo', 0)
+        if monto < 0:
+            raise ValidationError("El monto fijo no puede ser negativo.")
+        return monto

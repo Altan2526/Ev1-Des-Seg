@@ -194,6 +194,59 @@
                 <p>Ratificado y firmado ante mí / Ministro de Fe / Notaría Pública / Inspección del Trabajo</p>
             </div>
         {% endif %}
+    {% elif preview_doc %}
+        {# ==================== VISTA PREVIA DE DOCUMENTO ==================== #}
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="fw-bold">Vista Previa: {{ tipo_doc|capfirst }} de {{ empleado.nombre_completo }}</h2>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'gestion_documentos' %}" class="btn btn-outline-secondary">← Volver al Panel</a>
+                    <a href="{% url 'descargar_documento_individual' tipo_doc empleado.pk %}"
+                       class="btn btn-success shadow-sm" title="Descargar PDF">
+                        📥 Descargar PDF
+                    </a>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6"><strong>Trabajador:</strong> {{ empleado.nombre_completo }}</div>
+                        <div class="col-md-6 text-md-end"><strong>RUT:</strong> {{ empleado.rut }}</div>
+                        <div class="col-md-6"><strong>Cargo:</strong> {{ empleado.cargo }}</div>
+                        <div class="col-md-6 text-md-end"><strong>Fecha Emisión:</strong> {{ fecha_emision|localtime|date:"d/m/Y" }}</div>
+                    </div>
+                    <hr>
+
+                    {% if tipo_doc == 'contrato' %}
+                        <table class="table table-sm table-bordered">
+                            <tbody>
+                                <tr><th>Tipo de Contrato</th><td>{{ parametros.tipo_contrato }}</td></tr>
+                                <tr><th>Sueldo Base</th><td>${{ parametros.sueldo_base|chilean_peso }}</td></tr>
+                                <tr><th>Jornada</th><td>{{ parametros.jornada }}</td></tr>
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <table class="table table-sm table-bordered">
+                            <tbody>
+                                <tr><th>Causal de Término</th><td>{{ parametros.causal_termino }}</td></tr>
+                                <tr><th>Fecha de Término</th><td>{{ parametros.fecha_termino }}</td></tr>
+                                <tr><th>Años de Servicio</th><td>${{ parametros.monto_anos_servicio|chilean_peso }}</td></tr>
+                                <tr><th>Aviso Previa</th><td>${{ parametros.monto_aviso_previo|chilean_peso }}</td></tr>
+                                <tr><th>Feriado Proporcional</th><td>${{ parametros.monto_feriado_proporcional|chilean_peso }}</td></tr>
+                                <tr><th>Días Pendientes</th><td>${{ parametros.monto_dias_pendientes|chilean_peso }}</td></tr>
+                                <tr class="table-info fw-bold"><th>Total a Pagar</th><td>${{ parametros.total_a_pagar|chilean_peso }}</td></tr>
+                            </tbody>
+                        </table>
+                    {% endif %}
+
+                    <p class="text-muted small fst-italic mt-3">
+                        Este documento ya está guardado en el sistema. Puedes descargar el PDF en cualquier
+                        momento desde este botón o desde el historial de documentos emitidos.
+                    </p>
+                </div>
+            </div>
+        </div>
     {% else %}
         {# ==================== INTERFAZ DE GESTIÓN (UI) ==================== #}
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 shadow-sm">
@@ -203,7 +256,7 @@
                 <div class="navbar-nav me-auto ms-3">
                     <a class="nav-link {% if request.resolver_match.url_name in 'lista_empleados crear_empleado detalle_empleado editar_empleado eliminar_empleado' %}text-info fw-bold active{% else %}text-white-50{% endif %}"
                        href="{% url 'lista_empleados' %}">Fichas de Personal</a>
-                    <a class="nav-link {% if request.resolver_match.url_name == 'gestion_documentos' %}text-info fw-bold active{% else %}text-white-50{% endif %}"
+                    <a class="nav-link {% if request.resolver_match.url_name in 'gestion_documentos previsualizar_documento' %}text-info fw-bold active{% else %}text-white-50{% endif %}"
                        href="{% url 'gestion_documentos' %}">Contratos y Finiquitos</a>
                     <a class="nav-link {% if request.resolver_match.url_name == 'bitacora_auditoria' %}text-info fw-bold active{% else %}text-white-50{% endif %}"
                        href="{% url 'bitacora_auditoria' %}">Bitácora de Seguridad</a>
@@ -276,7 +329,8 @@
                                             <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalContrato{{ emp.pk }}" title="Modificar contrato">
                                                 ✏️ Modificar Contrato
                                             </button>
-                                            <a href="{% url 'descargar_documento_individual' 'contrato' emp.pk %}" class="btn btn-sm btn-outline-secondary" title="Descargar PDF">📥 Descargar</a>
+                                            <a href="{% url 'previsualizar_documento' 'contrato' emp.pk %}" class="btn btn-sm btn-outline-secondary" title="Vista previa">👁️ Ver</a>
+                                            <a href="{% url 'descargar_documento_individual' 'contrato' emp.pk %}" class="btn btn-sm btn-outline-secondary" title="Descargar PDF">📥</a>
                                             {% endwith %}
                                         {% else %}
                                             <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalContrato{{ emp.pk }}" title="Crear contrato">
@@ -290,6 +344,7 @@
                                             <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalFiniquito{{ emp.pk }}" title="Modificar finiquito">
                                                 ✏️ Modificar Finiquito
                                             </button>
+                                            <a href="{% url 'previsualizar_documento' 'finiquito' emp.pk %}" class="btn btn-sm btn-outline-secondary" title="Vista previa">👁️ Ver</a>
                                             <a href="{% url 'descargar_documento_individual' 'finiquito' emp.pk %}" class="btn btn-sm btn-outline-secondary" title="Descargar PDF">📥</a>
                                             {% endwith %}
                                         {% else %}
@@ -333,7 +388,7 @@
                                             </div>
                                             <div class="modal-footer">
                                                 <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                                <button type="submit" class="btn btn-sm btn-warning fw-bold">Guardar y Descargar PDF</button>
+                                                <button type="submit" class="btn btn-sm btn-warning fw-bold">Guardar y Previsualizar</button>
                                             </div>
                                         </form>
                                     </div>
@@ -426,7 +481,7 @@
                                             </div>
                                             <div class="modal-footer">
                                                 <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                                <button type="submit" class="btn btn-sm btn-warning fw-bold">Guardar y Descargar PDF</button>
+                                                <button type="submit" class="btn btn-sm btn-warning fw-bold">Guardar y Previsualizar</button>
                                             </div>
                                         </form>
                                     </div>
@@ -527,6 +582,7 @@
                                 </td>
                                 <td class="small text-muted">{{ doc.actualizado_en|localtime|date:"d/m/Y H:i" }}</td>
                                 <td class="text-center">
+                                    <a href="{% url 'previsualizar_documento' doc.tipo|lower doc.empleado.pk %}" class="btn btn-sm btn-outline-secondary" title="Vista previa">👁️</a>
                                     <a href="{% url 'descargar_documento_individual' doc.tipo|lower doc.empleado.pk %}" class="btn btn-sm btn-outline-secondary" title="Descargar PDF">📥</a>
                                 </td>
                             </tr>
