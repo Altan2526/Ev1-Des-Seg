@@ -1,0 +1,604 @@
+{% load recursos_humanos_tags %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>
+        {% if pdf %}
+            {% if tipo_doc == 'contrato' %}Contrato de Trabajo{% else %}Finiquito de Contrato de Trabajo{% endif %}
+        {% else %}
+            Contratos y Finiquitos - ERP Seguridad LTDA
+        {% endif %}
+    </title>
+    {% if pdf %}
+    <style>
+        @page {
+            size: letter;
+            margin: 2.5cm 2cm 2.5cm 2cm;
+            @bottom-right {
+                content: "Página " counter(page) " de " counter(pages);
+                font-size: 9pt;
+            }
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11pt;
+            line-height: 1.5;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 25px;
+        }
+        .clausula {
+            margin-bottom: 12px;
+            text-align: justify;
+        }
+        .parrafo {
+            margin-bottom: 10px;
+            text-align: justify;
+        }
+        .datos-laborales {
+            margin: 12px 0;
+            padding: 8px 12px;
+            background-color: #f7f7f7;
+            border-left: 4px solid #333;
+            font-size: 9.5pt;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            border: 1px solid #999;
+            padding: 6px 8px;
+            font-size: 9pt;
+        }
+        th {
+            background-color: #e6e6e6;
+            text-align: left;
+        }
+        .text-right { text-align: right; }
+        .total-row {
+            font-weight: bold;
+            background-color: #f0f0f0;
+        }
+        .firmas {
+            margin-top: 60px;
+            width: 100%;
+        }
+        .firma-box {
+            display: inline-block;
+            width: 45%;
+            text-align: center;
+            border-top: 1px solid #000;
+            padding-top: 5px;
+        }
+        .ministro-fe {
+            margin-top: 35px;
+            text-align: center;
+            font-size: 8.5pt;
+            color: #555;
+        }
+    </style>
+    {% else %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    {% endif %}
+</head>
+<body class="{% if not pdf %}bg-light{% endif %}">
+
+    {% if pdf %}
+        {# ==================== CONTENIDO PDF (Contrato / Finiquito) ==================== #}
+        {% if tipo_doc == 'contrato' %}
+            <div class="header">
+                <h2>Contrato Individual de Trabajo</h2>
+            </div>
+            <p class="clausula">
+                En {{ fecha_emision|date:"d/m/Y" }}, entre <strong>{{ empresa.razon_social }}</strong>,
+                RUT {{ empresa.rut }}, representada por {{ empresa.representante_legal }}, en adelante el "Empleador", y
+                don/doña <strong>{{ empleado.nombre_completo }}</strong>, RUT {{ empleado.rut }},
+                domiciliado en {{ empleado.direccion }}, en adelante el "Trabajador", se ha convenido lo siguiente:
+            </p>
+            <p class="clausula">
+                <strong>PRIMERO:</strong> El Trabajador prestará servicios en el cargo de <strong>{{ empleado.cargo }}</strong>,
+                cumpliendo funciones correspondientes al departamento de <strong>{{ empleado.get_centro_costo_display }}</strong>.
+            </p>
+            <p class="clausula">
+                <strong>SEGUNDO:</strong> El Empleador pagará al Trabajador una remuneración mensual bruta de
+                <strong>${{ parametros.sueldo_base|chilean_peso }}</strong>, con una jornada de <strong>{{ parametros.jornada }}</strong>.
+            </p>
+            <div class="firmas">
+                <div class="firma-box" style="float: left;">
+                    {{ empresa.representante_legal }}<br>
+                    <strong>Empleador</strong>
+                </div>
+                <div class="firma-box" style="float: right;">
+                    {{ empleado.nombre_completo }}<br>
+                    <strong>Trabajador (RUT: {{ empleado.rut }})</strong>
+                </div>
+            </div>
+        {% else %}
+            <div class="header">
+                <h3>Finiquito de Contrato de Trabajo</h3>
+            </div>
+            <p class="parrafo">
+                En {{ fecha_emision|date:"d/m/Y" }}, comparecen don/doña <strong>{{ empresa.representante_legal }}</strong>,
+                en representación de <strong>{{ empresa.razon_social }}</strong>, RUT <strong>{{ empresa.rut }}</strong>, con domicilio en
+                {{ empresa.direccion }}, en adelante el "Empleador", y don/doña <strong>{{ empleado.nombre_completo }}</strong>,
+                RUT <strong>{{ empleado.rut }}</strong>, con domicilio en {{ empleado.direccion }}, en adelante el "Trabajador", quienes
+                acuerdan suscribir el presente Finiquito de Contrato de Trabajo conforme a las siguientes estipulaciones:
+            </p>
+            <div class="datos-laborales">
+                <strong>Fecha de Inicio:</strong> {{ empleado.fecha_ingreso|date:"d/m/Y" }}<br>
+                <strong>Fecha de Término:</strong> {{ parametros.fecha_termino|parse_date|date:"d/m/Y" }}<br>
+                <strong>Cargo:</strong> {{ empleado.cargo }}<br>
+                <strong>Causal de Despido / Término:</strong> {{ parametros.causal_termino }}
+            </div>
+            <p class="parrafo">
+                <strong>PRIMERO - DEGLOSE DE HABERES E INDEMNIZACIONES:</strong><br>
+                El Empleador hace entrega al Trabajador de la liquidación y pago de las siguientes sumas por concepto de término de relación laboral:
+            </p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Concepto / Detalle</th>
+                        <th class="text-right" style="width: 120px;">Monto ($)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Indemnización por Años de Servicio</td>
+                        <td class="text-right">${{ parametros.monto_anos_servicio|chilean_peso }}</td>
+                    </tr>
+                    <tr>
+                        <td>Indemnización Sustitutiva de Aviso Previo</td>
+                        <td class="text-right">${{ parametros.monto_aviso_previo|chilean_peso }}</td>
+                    </tr>
+                    <tr>
+                        <td>Feriado Legal Proporcional (Vacaciones Pendientes)</td>
+                        <td class="text-right">${{ parametros.monto_feriado_proporcional|chilean_peso }}</td>
+                    </tr>
+                    <tr>
+                        <td>Remuneración Pendiente (Días trabajados del mes)</td>
+                        <td class="text-right">${{ parametros.monto_dias_pendientes|chilean_peso }}</td>
+                    </tr>
+                    <tr class="total-row">
+                        <td>TOTAL LÍQUIDO A PAGAR</td>
+                        <td class="text-right">${{ parametros.total_a_pagar|chilean_peso }}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p class="parrafo">
+                <strong>SEGUNDO - DECLARACIÓN Y CONFORMIDAD:</strong><br>
+                El Trabajador declara haber recibido a su entera satisfacción los importes detallados,
+                otorgando amplio y total finiquito al Empleador, manifestando que no se le adeuda suma alguna por
+                concepto de remuneraciones, cotizaciones previsionales, horas extras ni indemnizaciones de ninguna naturaleza.
+            </p>
+            <div class="firmas">
+                <div class="firma-box" style="float: left;">
+                    {{ empresa.representante_legal }}<br>
+                    <strong>Por el Empleador</strong><br>
+                    RUT: {{ empresa.rut }}
+                </div>
+                <div class="firma-box" style="float: right;">
+                    {{ empleado.nombre_completo }}<br>
+                    <strong>Trabajador</strong><br>
+                    RUT: {{ empleado.rut }}
+                </div>
+            </div>
+            <div style="clear: both;"></div>
+            <div class="ministro-fe">
+                <p>Ratificado y firmado ante mí / Ministro de Fe / Notaría Pública / Inspección del Trabajo</p>
+            </div>
+        {% endif %}
+    {% elif preview_doc %}
+        {# ==================== VISTA PREVIA DE DOCUMENTO ==================== #}
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="fw-bold">Vista Previa: {{ tipo_doc|capfirst }} de {{ empleado.nombre_completo }}</h2>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'gestion_documentos' %}" class="btn btn-outline-secondary">← Volver al Panel</a>
+                    <a href="{% url 'descargar_documento_individual' tipo_doc empleado.pk %}"
+                       class="btn btn-success shadow-sm" title="Descargar PDF">
+                        📥 Descargar PDF
+                    </a>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6"><strong>Trabajador:</strong> {{ empleado.nombre_completo }}</div>
+                        <div class="col-md-6 text-md-end"><strong>RUT:</strong> {{ empleado.rut }}</div>
+                        <div class="col-md-6"><strong>Cargo:</strong> {{ empleado.cargo }}</div>
+                        <div class="col-md-6 text-md-end"><strong>Fecha Emisión:</strong> {{ fecha_emision|localtime|date:"d/m/Y" }}</div>
+                    </div>
+                    <hr>
+
+                    {% if tipo_doc == 'contrato' %}
+                        <table class="table table-sm table-bordered">
+                            <tbody>
+                                <tr><th>Tipo de Contrato</th><td>{{ parametros.tipo_contrato }}</td></tr>
+                                <tr><th>Sueldo Base</th><td>${{ parametros.sueldo_base|chilean_peso }}</td></tr>
+                                <tr><th>Jornada</th><td>{{ parametros.jornada }}</td></tr>
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <table class="table table-sm table-bordered">
+                            <tbody>
+                                <tr><th>Causal de Término</th><td>{{ parametros.causal_termino }}</td></tr>
+                                <tr><th>Fecha de Término</th><td>{{ parametros.fecha_termino }}</td></tr>
+                                <tr><th>Años de Servicio</th><td>${{ parametros.monto_anos_servicio|chilean_peso }}</td></tr>
+                                <tr><th>Aviso Previa</th><td>${{ parametros.monto_aviso_previo|chilean_peso }}</td></tr>
+                                <tr><th>Feriado Proporcional</th><td>${{ parametros.monto_feriado_proporcional|chilean_peso }}</td></tr>
+                                <tr><th>Días Pendientes</th><td>${{ parametros.monto_dias_pendientes|chilean_peso }}</td></tr>
+                                <tr class="table-info fw-bold"><th>Total a Pagar</th><td>${{ parametros.total_a_pagar|chilean_peso }}</td></tr>
+                            </tbody>
+                        </table>
+                    {% endif %}
+
+                    <p class="text-muted small fst-italic mt-3">
+                        Este documento ya está guardado en el sistema. Puedes descargar el PDF en cualquier
+                        momento desde este botón o desde el historial de documentos emitidos.
+                    </p>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        {# ==================== INTERFAZ DE GESTIÓN (UI) ==================== #}
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 shadow-sm">
+            <div class="container">
+                <a class="navbar-brand fw-bold" href="{% url 'lista_empleados' %}">ERP Seguridad LTDA | RRHH</a>
+                {% if request.user.is_authenticated %}
+                <div class="navbar-nav me-auto ms-3">
+                    <a class="nav-link {% if request.resolver_match.url_name in 'lista_empleados crear_empleado detalle_empleado editar_empleado eliminar_empleado' %}text-info fw-bold active{% else %}text-white-50{% endif %}"
+                       href="{% url 'lista_empleados' %}">Fichas de Personal</a>
+                    <a class="nav-link {% if request.resolver_match.url_name in 'gestion_documentos previsualizar_documento' %}text-info fw-bold active{% else %}text-white-50{% endif %}"
+                       href="{% url 'gestion_documentos' %}">Contratos y Finiquitos</a>
+                    <a class="nav-link {% if request.resolver_match.url_name == 'bitacora_auditoria' %}text-info fw-bold active{% else %}text-white-50{% endif %}"
+                       href="{% url 'bitacora_auditoria' %}">Bitácora de Seguridad</a>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="navbar-text text-white">Usuario: <strong>{{ request.user.username }}</strong></span>
+                    <form method="post" action="{% url 'logout' %}" class="m-0">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Cerrar Sesión</button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </nav>
+
+        <div class="container">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+                        {{ message }}
+                        <button type="button" data-bs-dismiss="alert" aria-label="Cerrar" class="btn-close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h2 class="fw-bold mb-1">Contratos y Finiquitos</h2>
+                    <p class="text-muted mb-0 small">Emisión y automatización de documentación laboral (Historia EV1DS-10)</p>
+                </div>
+                <!-- Descarga Masiva de Contratos -->
+                <form method="post" action="{% url 'descargar_documentos_masivos' %}" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="tipo" value="contrato">
+                    {% for emp in empleados %}
+                        <input type="hidden" name="empleados_ids" value="{{ emp.id }}">
+                    {% endfor %}
+                    <button type="submit" class="btn btn-success shadow-sm">📦 Descargar Contratos Masivos (.ZIP)</button>
+                </form>
+            </div>
+
+            <!-- Tabla de empleados con modales de emisión -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-0">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>RUT</th>
+                                <th>Nombre Completo</th>
+                                <th>Cargo</th>
+                                <th>Centro de Costo</th>
+                                <th class="text-center" style="width: 260px;">Documentos</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for emp in empleados %}
+                            {% with emp_docs=doc_map|get_item:emp.pk %}
+                            {% with contrato_doc=emp_docs|get_item:"CONTRATO" %}
+                            {% with finiquito_doc=emp_docs|get_item:"FINIQUITO" %}
+                            <tr>
+                                <td class="fw-bold text-nowrap">{{ emp.rut }}</td>
+                                <td>{{ emp.nombre_completo }}</td>
+                                <td>{{ emp.cargo }}</td>
+                                <td><span class="badge bg-info text-dark">{{ emp.get_centro_costo_display }}</span></td>
+                                <td class="text-center">
+                                    <div class="d-inline-flex gap-1">
+                                        {# --- CONTRATO --- #}
+                                        {% if contrato_doc %}
+                                            {% with contrato_doc.parametros as cp %}
+                                            <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalContrato{{ emp.pk }}" title="Modificar contrato">
+                                                ✏️ Modificar Contrato
+                                            </button>
+                                            <a href="{% url 'previsualizar_documento' 'contrato' emp.pk %}" class="btn btn-sm btn-outline-secondary" title="Vista previa">👁️ Ver</a>
+                                            <a href="{% url 'descargar_documento_individual' 'contrato' emp.pk %}" class="btn btn-sm btn-outline-secondary" title="Descargar PDF">📥</a>
+                                            {% endwith %}
+                                        {% else %}
+                                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalContrato{{ emp.pk }}" title="Crear contrato">
+                                                📄 Crear Contrato
+                                            </button>
+                                        {% endif %}
+
+                                        {# --- FINIQUITO --- #}
+                                        {% if finiquito_doc %}
+                                            {% with finiquito_doc.parametros as fp %}
+                                            <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalFiniquito{{ emp.pk }}" title="Modificar finiquito">
+                                                ✏️ Modificar Finiquito
+                                            </button>
+                                            <a href="{% url 'previsualizar_documento' 'finiquito' emp.pk %}" class="btn btn-sm btn-outline-secondary" title="Vista previa">👁️ Ver</a>
+                                            <a href="{% url 'descargar_documento_individual' 'finiquito' emp.pk %}" class="btn btn-sm btn-outline-secondary" title="Descargar PDF">📥</a>
+                                            {% endwith %}
+                                        {% else %}
+                                            <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#modalFiniquito{{ emp.pk }}" title="Crear finiquito">
+                                                📑 Crear Finiquito
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+
+                            {# ===================== MODAL CONTRATO ===================== #}
+                            {% if contrato_doc %}
+                            {% with contrato_doc.parametros as cp %}
+                            <div class="modal fade" id="modalContrato{{ emp.pk }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <form method="POST" action="{% url 'descargar_documento_individual' 'contrato' emp.pk %}">
+                                            {% csrf_token %}
+                                            <div class="modal-header bg-warning text-dark">
+                                                <h5 class="modal-title fs-6">Modificar Contrato: {{ emp.nombre_completo }}</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body text-start">
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Tipo de Contrato</label>
+                                                    <select name="tipo_contrato" class="form-select form-select-sm">
+                                                        <option value="Plazo Indefinido" {% if cp.tipo_contrato == 'Plazo Indefinido' %}selected{% endif %}>Plazo Indefinido</option>
+                                                        <option value="Plazo Fijo" {% if cp.tipo_contrato == 'Plazo Fijo' %}selected{% endif %}>Plazo Fijo</option>
+                                                        <option value="Por Obra o Faena" {% if cp.tipo_contrato == 'Por Obra o Faena' %}selected{% endif %}>Por Obra o Faena</option>
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Sueldo Base Mensual ($)</label>
+                                                    <input type="number" name="sueldo_base" class="form-control form-control-sm" value="{{ cp.sueldo_base }}" min="0" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Jornada Semanal</label>
+                                                    <input type="text" name="jornada" class="form-control form-control-sm" value="{{ cp.jornada }}">
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                <button type="submit" class="btn btn-sm btn-warning fw-bold">Guardar y Previsualizar</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endwith %}
+                            {% else %}
+                            <div class="modal fade" id="modalContrato{{ emp.pk }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <form method="POST" action="{% url 'descargar_documento_individual' 'contrato' emp.pk %}">
+                                            {% csrf_token %}
+                                            <div class="modal-header bg-primary text-white">
+                                                <h5 class="modal-title fs-6">Crear Contrato: {{ emp.nombre_completo }}</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body text-start">
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Tipo de Contrato</label>
+                                                    <select name="tipo_contrato" class="form-select form-select-sm">
+                                                        <option value="Plazo Indefinido" selected>Plazo Indefinido</option>
+                                                        <option value="Plazo Fijo">Plazo Fijo</option>
+                                                        <option value="Por Obra o Faena">Por Obra o Faena</option>
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Sueldo Base Mensual ($)</label>
+                                                    <input type="number" name="sueldo_base" class="form-control form-control-sm" value="650000" min="0" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Jornada Semanal</label>
+                                                    <input type="text" name="jornada" class="form-control form-control-sm" value="40 horas semanales">
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                <button type="submit" class="btn btn-sm btn-primary fw-bold">Descargar Contrato PDF</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {# ===================== MODAL FINIQUITO ===================== #}
+                            {% if finiquito_doc %}
+                            {% with finiquito_doc.parametros as fp %}
+                            <div class="modal fade" id="modalFiniquito{{ emp.pk }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <form method="POST" action="{% url 'descargar_documento_individual' 'finiquito' emp.pk %}">
+                                            {% csrf_token %}
+                                            <div class="modal-header bg-warning text-dark">
+                                                <h5 class="modal-title fs-6">Modificar Finiquito: {{ emp.nombre_completo }}</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body text-start">
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Causal de Despido / Término *</label>
+                                                    <select name="causal" class="form-select form-select-sm" required>
+                                                        <option value="Artículo 161 Inciso 1: Necesidades de la Empresa" {% if fp.causal_termino == 'Artículo 161 Inciso 1: Necesidades de la Empresa' %}selected{% endif %}>Art. 161 Inc. 1: Necesidades de la Empresa</option>
+                                                        <option value="Artículo 159 N° 1: Mutuo Acuerdo de las Partes" {% if fp.causal_termino == 'Artículo 159 N° 1: Mutuo Acuerdo de las Partes' %}selected{% endif %}>Art. 159 N° 1: Mutuo Acuerdo</option>
+                                                        <option value="Artículo 159 N° 2: Renuncia Voluntaria del Trabajador" {% if fp.causal_termino == 'Artículo 159 N° 2: Renuncia Voluntaria del Trabajador' %}selected{% endif %}>Art. 159 N° 2: Renuncia Voluntaria</option>
+                                                        <option value="Artículo 159 N° 4: Vencimiento del Plazo Convenido" {% if fp.causal_termino == 'Artículo 159 N° 4: Vencimiento del Plazo Convenido' %}selected{% endif %}>Art. 159 N° 4: Vencimiento del Plazo</option>
+                                                        <option value="Artículo 160: Conductas indebidas graves (Sin indemnización)" {% if fp.causal_termino == 'Artículo 160: Conductas indebidas graves (Sin indemnización)' %}selected{% endif %}>Art. 160: Despido Justificado (Falta grave)</option>
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Fecha de Término</label>
+                                                    <input type="date" name="fecha_termino" class="form-control form-control-sm" value="{{ fp.fecha_termino }}" required>
+                                                </div>
+                                                <div class="row g-2">
+                                                    <div class="col-6">
+                                                        <label class="form-label small">Años de Servicio ($)</label>
+                                                        <input type="number" name="monto_anos" class="form-control form-control-sm" value="{{ fp.monto_anos_servicio }}" min="0">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label small">Mes de Aviso ($)</label>
+                                                        <input type="number" name="monto_aviso" class="form-control form-control-sm" value="{{ fp.monto_aviso_previo }}" min="0">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label small">Vacaciones Pendientes ($)</label>
+                                                        <input type="number" name="monto_feriado" class="form-control form-control-sm" value="{{ fp.monto_feriado_proporcional }}" min="0">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label small">Días Pendientes ($)</label>
+                                                        <input type="number" name="monto_pendientes" class="form-control form-control-sm" value="{{ fp.monto_dias_pendientes }}" min="0">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                <button type="submit" class="btn btn-sm btn-warning fw-bold">Guardar y Previsualizar</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endwith %}
+                            {% else %}
+                            <div class="modal fade" id="modalFiniquito{{ emp.pk }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <form method="POST" action="{% url 'descargar_documento_individual' 'finiquito' emp.pk %}">
+                                            {% csrf_token %}
+                                            <div class="modal-header bg-dark text-white">
+                                                <h5 class="modal-title fs-6">Crear Finiquito: {{ emp.nombre_completo }}</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body text-start">
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Causal de Despido / Término *</label>
+                                                    <select name="causal" class="form-select form-select-sm" required>
+                                                        <option value="Artículo 161 Inciso 1: Necesidades de la Empresa" selected>Art. 161 Inc. 1: Necesidades de la Empresa</option>
+                                                        <option value="Artículo 159 N° 1: Mutuo Acuerdo de las Partes">Art. 159 N° 1: Mutuo Acuerdo</option>
+                                                        <option value="Artículo 159 N° 2: Renuncia Voluntaria del Trabajador">Art. 159 N° 2: Renuncia Voluntaria</option>
+                                                        <option value="Artículo 159 N° 4: Vencimiento del Plazo Convenido">Art. 159 N° 4: Vencimiento del Plazo</option>
+                                                        <option value="Artículo 160: Conductas indebidas graves (Sin indemnización)">Art. 160: Despido Justificado (Falta grave)</option>
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Fecha de Término</label>
+                                                    <input type="date" name="fecha_termino" class="form-control form-control-sm" required>
+                                                </div>
+                                                <div class="row g-2">
+                                                    <div class="col-6">
+                                                        <label class="form-label small">Años de Servicio ($)</label>
+                                                        <input type="number" name="monto_anos" class="form-control form-control-sm" value="0">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label small">Mes de Aviso ($)</label>
+                                                        <input type="number" name="monto_aviso" class="form-control form-control-sm" value="0">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label small">Vacaciones Pendientes ($)</label>
+                                                        <input type="number" name="monto_feriado" class="form-control form-control-sm" value="150000">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label small">Días Pendientes ($)</label>
+                                                        <input type="number" name="monto_pendientes" class="form-control form-control-sm" value="200000">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                <button type="submit" class="btn btn-sm btn-danger fw-bold">Descargar Finiquito PDF</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% endwith %} {# finiquito_doc #}
+                            {% endwith %} {# contrato_doc #}
+                            {% endwith %} {# emp_docs #}
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">No hay colaboradores registrados.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Historial de Documentos Emitidos -->
+            {% if documentos %}
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light fw-bold small text-uppercase">Historial de Documentos Emitidos</div>
+                <div class="card-body p-0">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Empleado</th>
+                                <th>Parámetros</th>
+                                <th class="text-nowrap">Última Actualización</th>
+                                <th class="text-center" style="width: 100px;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for doc in documentos %}
+                            <tr>
+                                <td><span class="badge {% if doc.tipo == 'CONTRATO' %}bg-primary{% else %}bg-secondary{% endif %} text-white">{{ doc.get_tipo_display }}</span></td>
+                                <td>{{ doc.empleado.nombre_completo }} ({{ doc.empleado.rut }})</td>
+                                <td>
+                                    {% for key, value in doc.parametros.items %}
+                                        <small class="d-block"><strong>{{ key }}:</strong> {{ value|chilean_peso }}</small>
+                                    {% endfor %}
+                                </td>
+                                <td class="small text-muted">{{ doc.actualizado_en|localtime|date:"d/m/Y H:i" }}</td>
+                                <td class="text-center">
+                                    <a href="{% url 'previsualizar_documento' doc.tipo|lower doc.empleado.pk %}" class="btn btn-sm btn-outline-secondary" title="Vista previa">👁️</a>
+                                    <a href="{% url 'descargar_documento_individual' doc.tipo|lower doc.empleado.pk %}" class="btn btn-sm btn-outline-secondary" title="Descargar PDF">📥</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="5" class="text-center text-muted py-3">Sin documentos emitidos.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% else %}
+            <p class="text-muted small mb-0">Aún no se han emitido documentos.</p>
+            {% endif %}
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    {% endif %}
+</body>
+</html>
