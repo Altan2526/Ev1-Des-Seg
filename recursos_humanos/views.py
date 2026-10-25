@@ -9,9 +9,13 @@ from django.views.decorators.http import require_http_methods, require_safe, req
 from django.contrib import messages
 from django.http import HttpResponse, JsonResponse
 from django.template.loader import get_template
+from django.utils import timezone
 
-from .models import Empleado, CargaFamiliar, RegistroAuditoria, DocumentoEmitido
-from .forms import EmpleadoForm, CargaFamiliarForm
+from .models import (
+    Empleado, CargaFamiliar, RegistroAuditoria, DocumentoEmitido,
+    Concepto, LiquidacionSueldo,
+)
+from .forms import EmpleadoForm, CargaFamiliarForm, ConceptoForm
 
 URL_LISTA_EMPLEADOS = 'lista_empleados'
 URL_DETALLE_EMPLEADO = 'detalle_empleado'
@@ -325,15 +329,12 @@ def descargar_documento_individual(request, tipo, empleado_id):
             detalle=f"Se creó el {tipo_db.lower()} para {empleado.nombre_completo} (RUT: {empleado.rut})."
         )
 
-    contexto = _build_pdf_context(tipo, empleado, parametros)
-    pdf_bytes = html_to_pdf_bytes('recursos_humanos/gestion_documentos.html', contexto)
-    if not pdf_bytes:
-        return JsonResponse({'error': 'Error al generar el archivo PDF.'}, status=500)
-
-    nombre_archivo = f"{tipo.capitalize()}_{empleado.rut}.pdf"
-    response = HttpResponse(pdf_bytes, content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="{nombre_archivo}"'
-    return response
+        # Redirigir a vista previa (descarga PDF opcional desde allí)
+        messages.success(
+            request,
+            f"{tipo_db.capitalize()} de {empleado.nombre_completo} guardado correctamente."
+        )
+        return redirect('previsualizar_documento', tipo=tipo, empleado_id=empleado.pk)
 
 
 @login_required
@@ -402,3 +403,331 @@ def descargar_documentos_masivos(request):
     response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
     response['Content-Disposition'] = f'attachment; filename="{tipo_db.capitalize()}s_Masivos.zip"'
     return response
+
+
+# =====================================================================
+# VISTAS DE CÁLCULO PARAMÉTRICO DE SUELDOS (EV1DS-06)
+# =====================================================================
+
+def _obtener_sueldo_base(empleado):
+    """
+    Obtiene el sueldo_base y jornada del contrato vigente (EV1DS-10).
+    Retorna (sueldo_base, jornada, contrato_doc) o (None, None, None)
+    si el empleado no tiene contrato.
+    """
+    contrato_doc = DocumentoEmitido.objects.filter(
+        empleado=empleado, tipo='CONTRATO'
+    ).order_by('-fecha_emision').first()
+    if not contrato_doc:
+        return None, None, None
+    parametros = contrato_doc.parametros
+    return (
+        parametros.get('sueldo_base', 0),
+        parametros.get('jornada', ''),
+        contrato_doc,
+    )
+
+
+def _validar_entero_positivo(value, field_name='valor'):
+    """Valida estrictamente que un valor sea un entero positivo (DevSecOps)."""
+    try:
+        val = int(value)
+    except (TypeError, ValueError):
+        raise ValueError(f"El campo '{field_name}' debe ser un número entero.")
+    if val < 0:
+        raise ValueError(f"El campo '{field_name}' no puede ser negativo.")
+    return val
+
+
+def _calcular_liquidacion(empleado, sueldo_base, periodo, request):
+    """
+    Ejecuta el cálculo paramétrico de la liquidación de sueldo.
+    Obtiene sueldo_base del contrato (EV1DS-10), aplica haberes y
+    descuentos activos, y persiste la LiquidacionSueldo.
+    Nunca usa eval(); las fórmulas se evalúan con safe_eval_arithmetic().
+    """
+    contrato_doc = DocumentoEmitido.objects.filter(
+        empleado=empleado, tipo='CONTRATO'
+    ).order_by('-fecha_emision').first()
+
+    contexto_formula = {'sueldo_base': sueldo_base}
+
+    haberes = {}
+    descuentos = {}
+    total_haberes = 0
+    total_descuentos = 0
+
+    conceptos_activos = Concepto.objects.filter(activo=True)
+    for concepto in conceptos_activos:
+        valor = concepto.calcular(contexto_formula)
+        if valor == 0 and not concepto.formula and concepto.monto_fijo == 0:
+            continue
+        if concepto.tipo == 'HABER':
+            haberes[concepto.nombre] = valor
+            total_haberes += valor
+        elif concepto.tipo == 'DESCUENTO':
+            descuentos[concepto.nombre] = valor
+            total_descuentos += valor
+
+    sueldo_liquido = sueldo_base + total_haberes - total_descuentos
+
+    detalle = {
+        'sueldo_base': sueldo_base,
+        'haberes': haberes,
+        'descuentos': descuentos,
+        'total_haberes': total_haberes,
+        'total_descuentos': total_descuentos,
+        'sueldo_liquido': sueldo_liquido,
+    }
+
+    liquidacion = LiquidacionSueldo.objects.create(
+        empleado=empleado,
+        contrato_origen=contrato_doc,
+        sueldo_base=sueldo_base,
+        total_haberes=total_haberes,
+        total_descuentos=total_descuentos,
+        sueldo_liquido=sueldo_liquido,
+        detalle_conceptos=detalle,
+        periodo=periodo,
+        emitido_por=request.user,
+    )
+
+    registrar_log(
+        request, accion='CREAR', entidad='Liquidación de Sueldo',
+        detalle=f"Se emitida liquidación para {empleado.nombre_completo} "
+                f"(RUT: {empleado.rut}) - Periodo {periodo} - "
+                f"Líquido: ${sueldo_liquido:,}."
+    )
+    return liquidacion
+
+
+def _build_liquidacion_pdf_context(liquidacion):
+    """Construye el contexto de renderizado para el PDF de liquidación."""
+    return {
+        'liquidacion': liquidacion,
+        'empresa': DATOS_EMPRESA,
+        'pdf': True,
+        'fecha_emision': datetime.date.today(),
+    }
+
+
+@login_required
+@require_safe
+def calculo_sueldos(request):
+    """
+    Panel principal de cálculo paramétrico de sueldos (EV1DS-06).
+
+    Muestra:
+    - Tabla de conceptos configurados (haberes / descuentos / fórmulas).
+    - Tabla de empleados con sueldo_base extraído del contrato vigente
+      (EV1DS-10). Botón de cálculo deshabilitado si no hay contrato.
+    - Historial de liquidaciones emitidas, ordenado de más reciente a más antiguo.
+    """
+    # --- Conceptos ---
+    haberes = Concepto.objects.filter(tipo='HABER', activo=True).order_by('nombre')
+    descuentos = Concepto.objects.filter(tipo='DESCUENTO', activo=True).order_by('nombre')
+
+    # --- Empleados con sueldo_base del contrato vigente (EV1DS-10) ---
+    empleados = Empleado.objects.all().order_by('apellido_paterno', 'primer_nombre')
+    sueldo_base_map = {}
+    jornada_map = {}
+    contrato_map = {}
+    for emp in empleados:
+        sb, jornada, contrato_doc = _obtener_sueldo_base(emp)
+        if sb is not None:
+            sueldo_base_map[emp.pk] = sb
+            jornada_map[emp.pk] = jornada
+            contrato_map[emp.pk] = contrato_doc
+
+    # --- Historial de liquidaciones ---
+    liquidaciones = LiquidacionSueldo.objects.select_related(
+        'empleado', 'contrato_origen'
+    ).order_by('-fecha_emision')[:50]
+
+    # --- Concepto form (para el modal de crear/editar) ---
+    concepto_form = ConceptoForm()
+
+    # Periodo por defecto: mes/año actual en zona horaria local
+    hoy_local = timezone.localtime(timezone.now())
+    periodo_default = f"{hoy_local.month:02d}/{hoy_local.year}"
+
+    return render(request, 'recursos_humanos/sueldos.html', {
+        'empleados': empleados,
+        'sueldo_base_map': sueldo_base_map,
+        'jornada_map': jornada_map,
+        'contrato_map': contrato_map,
+        'haberes': haberes,
+        'descuentos': descuentos,
+        'conceptos': Concepto.objects.filter(activo=True).order_by('tipo', 'nombre'),
+        'liquidaciones': liquidaciones,
+        'concepto_form': concepto_form,
+        'periodo_default': periodo_default,
+    })
+
+
+@login_required
+@require_http_methods(["POST"])
+def configurar_concepto(request):
+    """
+    Crea o actualiza un concepto salarial (haber / descuento / fórmula).
+    Valida estrictamente en backend: fórmula segura (AST, nunca eval()),
+    montos no negativos.
+    """
+    pk = request.POST.get('pk')
+    if pk:
+        try:
+            pk_int = int(pk)
+            instance = get_object_or_404(Concepto, pk=pk_int)
+            form = ConceptoForm(request.POST, instance=instance)
+            accion = 'MODIFICAR'
+            entidad = 'Concepto Salarial'
+        except (ValueError, TypeError):
+            return JsonResponse({'error': 'ID de concepto inválido.'}, status=400)
+    else:
+        form = ConceptoForm(request.POST)
+        accion = 'CREAR'
+        entidad = 'Concepto Salarial'
+
+    if form.is_valid():
+        concepto = form.save()
+        registrar_log(
+            request, accion=accion, entidad=entidad,
+            detalle=f"Concepto {accion.lower()} '{concepto.nombre}' "
+                    f"(código: {concepto.codigo}, tipo: {concepto.get_tipo_display()})."
+        )
+        messages.success(request, f"Concepto '{concepto.nombre}' guardado correctamente.")
+        return redirect('calculo_sueldos')
+    else:
+        errors = {field: [str(e) for e in errors_list] for field, errors_list in form.errors.items()}
+        return JsonResponse({'error': 'Validación fallida', 'details': errors}, status=400)
+
+
+@login_required
+@require_POST
+def generar_liquidacion(request, empleado_id):
+    """
+    Calcula y persiste la liquidación de sueldo para un empleado.
+
+    - Obtiene sueldo_base del contrato vigente (EV1DS-10).
+    - Si no hay contrato: retorna alerta con enlace a la sección de contratos.
+    - Aplica todos los conceptos activos (haberes y descuentos).
+    - Registra en la bitácora y genera el PDF en memoria.
+    """
+    empleado = get_object_or_404(Empleado, pk=empleado_id)
+    sueldo_base, jornada, contrato_doc = _obtener_sueldo_base(empleado)
+
+    if sueldo_base is None:
+        # Sin contrato vigente: alerta con enlace a EV1DS-10
+        alerta = (
+            f"El empleado {empleado.nombre_completo} (RUT: {empleado.rut}) "
+            "no tiene un contrato vigente emitido. Primero debe emitir su contrato "
+            "en Contratos y Finiquitos."
+        )
+        messages.warning(request, alerta)
+        return JsonResponse({
+            'sin_contrato': True,
+            'alerta': alerta,
+            'enlace': '/rrhh/documentos/',
+        }, status=400)
+
+    # Validar período
+    periodo = request.POST.get('periodo', '')
+    if not periodo:
+        hoy = timezone.localtime(timezone.now())
+        periodo = f"{hoy.month:02d}/{hoy.year}"
+
+    # Validar todos los montos enviados desde el cliente (DevSecOps)
+    # El sueldo_base NO viene del cliente; se obtiene del contrato (EV1DS-10)
+    try:
+        liquidacion = _calcular_liquidacion(empleado, sueldo_base, periodo, request)
+    except ValueError as e:
+        return JsonResponse({'error': f'Error en el cálculo: {str(e)}'}, status=400)
+
+    # Redirigir a vista previa (descarga PDF opcional desde allí)
+    messages.success(
+        request,
+        f"Liquidación para {empleado.nombre_completo} calculada correctamente."
+    )
+    return redirect('previsualizar_liquidacion', liquidacion_id=liquidacion.pk)
+
+
+@login_required
+@require_safe
+def descargar_liquidacion_pdf(request, liquidacion_id):
+    """
+    Re-descarga el PDF de una liquidación ya emitida (GET).
+    No re-crea ni modifica la liquidación: solo renderiza el PDF
+    usando los datos almacenados.
+    """
+    liquidacion = get_object_or_404(
+        LiquidacionSueldo.objects.select_related('empleado', 'contrato_origen'),
+        pk=liquidacion_id
+    )
+    contexto = _build_liquidacion_pdf_context(liquidacion)
+    pdf_bytes = html_to_pdf_bytes('recursos_humanos/sueldos.html', contexto)
+    if not pdf_bytes:
+        return JsonResponse({'error': 'Error al generar el archivo PDF.'}, status=500)
+
+    nombre_archivo = f"Liquidacion_{liquidacion.empleado.rut}_{liquidacion.periodo.replace('/', '-')}.pdf"
+    response = HttpResponse(pdf_bytes, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{nombre_archivo}"'
+    return response
+
+
+@login_required
+@require_safe
+def previsualizar_liquidacion(request, liquidacion_id):
+    """
+    Vista previa HTML de una liquidación ya calculada.
+
+    El PDF no se descarga automáticamente: el usuario puede revisar los
+    cálculos y decidir si descarga el PDF (botón opcional) o vuelve al
+    panel de sueldos. El registro ya está persistido, por lo que puede
+    descargarlo más tarde desde el historial.
+    """
+    liquidacion = get_object_or_404(
+        LiquidacionSueldo.objects.select_related('empleado', 'contrato_origen'),
+        pk=liquidacion_id
+    )
+    contexto = {
+        'preview': True,
+        'liquidacion': liquidacion,
+        'empresa': DATOS_EMPRESA,
+        'fecha_emision': timezone.localtime(timezone.now()).date(),
+    }
+    return render(request, 'recursos_humanos/sueldos.html', contexto)
+
+
+@login_required
+@require_safe
+def previsualizar_documento(request, tipo, empleado_id):
+    """
+    Vista previa HTML de un contrato o finiquito ya emitido.
+
+    El PDF no se descarga automáticamente: el usuario puede revisar los
+    parámetros y decidir si descarga el PDF (botón opcional). El
+    documento ya está persistido en la base de datos.
+    """
+    tipo = tipo.lower()
+    if tipo not in ('contrato', 'finiquito'):
+        return JsonResponse({'error': "Tipo de documento no válido."}, status=400)
+    tipo_db = 'CONTRATO' if tipo == 'contrato' else 'FINIQUITO'
+    empleado = get_object_or_404(Empleado, pk=empleado_id)
+    documento = DocumentoEmitido.objects.filter(
+        empleado=empleado, tipo=tipo_db
+    ).order_by('-fecha_emision').first()
+    if not documento:
+        return JsonResponse(
+            {'error': f'No hay {tipo_db.capitalize()} registrado para este empleado.'}, status=404
+        )
+    contexto = {
+        'preview_doc': True,
+        'tipo_doc': tipo,
+        'parametros': documento.parametros,
+        'empleado': empleado,
+        'empresa': DATOS_EMPRESA,
+        'fecha_emision': documento.fecha_emision,
+        'documento': documento,
+        'pdf': False,  # NO pdf: vista previa HTML
+    }
+    return render(request, 'recursos_humanos/gestion_documentos.html', contexto)

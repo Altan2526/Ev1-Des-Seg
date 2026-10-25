@@ -10,7 +10,7 @@
       "is_staff": true,
       "is_active": true,
       "is_superuser": true,
-      "password": "pbkdf2_sha256$1500000$almI5pGaR7EqwHWXYXFVIm$McBdyzaHnXnsdocNeymrPoEASic2wx7d43gcYJpdvrE=",
+      "password": "pbkdf2_sha256$1500000$CIadNJeVWAI9EYIXpoRQWK$49cTP6+a/ROeXcqsdiB/BX704ZcqRiu/fVkCxNIx4cM=",
       "last_login": "2026-10-22T10:00:00Z",
       "date_joined": "2026-10-15T10:00:00Z",
       "user_permissions": [],
@@ -367,6 +367,133 @@
       "detalle": "Se creó la ficha de Sofía Díaz Rojas (RUT: 27.890.123-8).",
       "ip_origen": "127.0.0.1",
       "fecha_hora": "2026-10-25T10:00:00Z"
+    }
+  },
+  {
+    "model": "recursos_humanos.documentoemitido",
+    "pk": 1,
+    "fields": {
+      "empleado": 6,
+      "tipo": "CONTRATO",
+      "parametros": {
+        "tipo_contrato": "Plazo Indefinido",
+        "sueldo_base": 650000,
+        "jornada": "40 horas semanales"
+      },
+      "emitido_por": 1,
+      "fecha_emision": "2026-10-20T10:00:00Z",
+      "actualizado_en": "2026-10-20T10:00:00Z"
+    }
+  },
+  {
+    "model": "recursos_humanos.concepto",
+    "pk": 1,
+    "fields": {
+      "codigo": "GRAT",
+      "nombre": "Gratificación",
+      "tipo": "HABER",
+      "clasificacion": "IMPONIBLE",
+      "formula": "sueldo_base * 0.10",
+      "monto_fijo": 0,
+      "activo": true,
+      "es_legal": false,
+      "creado_en": "2026-10-20T10:00:00Z",
+      "actualizado_en": "2026-10-20T10:00:00Z"
+    }
+  },
+  {
+    "model": "recursos_humanos.concepto",
+    "pk": 2,
+    "fields": {
+      "codigo": "BONO",
+      "nombre": "Bono Producción",
+      "tipo": "HABER",
+      "clasificacion": "IMPONIBLE",
+      "formula": "",
+      "monto_fijo": 50000,
+      "activo": true,
+      "es_legal": false,
+      "creado_en": "2026-10-20T10:00:00Z",
+      "actualizado_en": "2026-10-20T10:00:00Z"
+    }
+  },
+  {
+    "model": "recursos_humanos.concepto",
+    "pk": 3,
+    "fields": {
+      "codigo": "AFP",
+      "nombre": "Descuento AFP",
+      "tipo": "DESCUENTO",
+      "clasificacion": "IMPONIBLE",
+      "formula": "sueldo_base * 0.10",
+      "monto_fijo": 0,
+      "activo": true,
+      "es_legal": true,
+      "creado_en": "2026-10-20T10:00:00Z",
+      "actualizado_en": "2026-10-20T10:00:00Z"
+    }
+  },
+  {
+    "model": "recursos_humanos.concepto",
+    "pk": 4,
+    "fields": {
+      "codigo": "SALUD",
+      "nombre": "Descuento Salud/FONASA",
+      "tipo": "DESCUENTO",
+      "clasificacion": "IMPONIBLE",
+      "formula": "sueldo_base * 0.07",
+      "monto_fijo": 0,
+      "activo": true,
+      "es_legal": true,
+      "creado_en": "2026-10-20T10:00:00Z",
+      "actualizado_en": "2026-10-20T10:00:00Z"
+    }
+  },
+  {
+    "model": "recursos_humanos.liquidacionsueldo",
+    "pk": 1,
+    "fields": {
+      "empleado": 6,
+      "contrato_origen": 1,
+      "sueldo_base": 650000,
+      "total_haberes": 115000,
+      "total_descuentos": 110500,
+      "sueldo_liquido": 654500,
+      "detalle_conceptos": {
+        "sueldo_base": 650000,
+        "haberes": {"Gratificación": 65000, "Bono Producción": 50000},
+        "descuentos": {"Descuento AFP": 65000, "Descuento Salud/FONASA": 45500},
+        "total_haberes": 115000,
+        "total_descuentos": 110500,
+        "sueldo_liquido": 654500
+      },
+      "periodo": "06/2024",
+      "fecha_emision": "2026-10-24T15:00:00Z",
+      "emitido_por": 1
+    }
+  },
+  {
+    "model": "recursos_humanos.registroauditoria",
+    "pk": 7,
+    "fields": {
+      "usuario": 1,
+      "accion": "CREAR",
+      "entidad": "Conceptos Salariales",
+      "detalle": "Configuración inicial de conceptos: Gratificación, Bono Producción, Descuento AFP, Descuento Salud/FONASA.",
+      "ip_origen": "127.0.0.1",
+      "fecha_hora": "2026-10-20T10:00:00Z"
+    }
+  },
+  {
+    "model": "recursos_humanos.registroauditoria",
+    "pk": 8,
+    "fields": {
+      "usuario": 1,
+      "accion": "CREAR",
+      "entidad": "Liquidación de Sueldo",
+      "detalle": "Se emitida liquidación para Jorge Castro Mora (RUT: 25.678.901-9) - Periodo 06/2024 - Líquido: $654500.",
+      "ip_origen": "127.0.0.1",
+      "fecha_hora": "2026-10-24T15:00:00Z"
     }
   }
 ]

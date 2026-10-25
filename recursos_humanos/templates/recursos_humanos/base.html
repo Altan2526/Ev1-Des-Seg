@@ -31,6 +31,12 @@
                    Bitácora de Seguridad
                 </a>
 
+                <!-- 4. Liquidaciones de Sueldo (EV1DS-06) -->
+                <a class="nav-link {% if request.resolver_match.url_name in 'calculo_sueldos configurar_concepto generar_liquidacion descargar_liquidacion_pdf' %}text-info fw-bold active{% else %}text-white-50{% endif %}" 
+                   href="{% url 'calculo_sueldos' %}">
+                   Liquidaciones de Sueldo
+                </a>
+
             </div>
 
             <div class="d-flex align-items-center gap-3">
