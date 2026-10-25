@@ -1,7 +1,9 @@
 from django.db import models, transaction
+from django.utils import timezone
 from django.core.validators import FileExtensionValidator
-from .validators import validar_rut_chileno
 from django.contrib.auth.models import User
+from .validators import validar_rut_chileno
+
 
 class Empleado(models.Model):
     PREVISION_CHOICES = [
@@ -13,7 +15,6 @@ class Empleado(models.Model):
         ('PLAZO_FIJO', 'Plazo Fijo'),
         ('POR_OBRA', 'Por Obra o Faena'),
     ]
-    # El código (CC-XXX) se maneja internamente; RRHH selecciona por nombre del departamento
     CENTRO_COSTO_CHOICES = [
         ('CC-100', 'Administración y Finanzas'),
         ('CC-200', 'Recursos Humanos'),
@@ -32,18 +33,14 @@ class Empleado(models.Model):
         ('UNO', 'AFP Uno'),
     ]
 
-    # Datos Personales (Obligatorios salvo segundo_nombre)
+    # Datos Personales
     rut = models.CharField(
-        max_length=12,
-        unique=True,
-        validators=[validar_rut_chileno],
-        verbose_name="RUT"
+        max_length=12, unique=True,
+        validators=[validar_rut_chileno], verbose_name="RUT"
     )
     primer_nombre = models.CharField(max_length=50, verbose_name="Primer Nombre")
     segundo_nombre = models.CharField(
-        max_length=50,
-        blank=True,
-        default='',
+        max_length=50, blank=True, default='',
         verbose_name="Segundo Nombre (Opcional)"
     )
     apellido_paterno = models.CharField(max_length=50, verbose_name="Apellido Paterno")
@@ -56,33 +53,23 @@ class Empleado(models.Model):
     # Datos Laborales
     cargo = models.CharField(max_length=100, verbose_name="Cargo")
     centro_costo = models.CharField(
-        max_length=10,
-        choices=CENTRO_COSTO_CHOICES,
+        max_length=10, choices=CENTRO_COSTO_CHOICES,
         verbose_name="Departamento / Centro de Costo"
     )
     tipo_contrato = models.CharField(
-        max_length=20,
-        choices=TIPO_CONTRATO_CHOICES,
-        default='INDEFINIDO',
-        verbose_name="Tipo de Contrato"
+        max_length=20, choices=TIPO_CONTRATO_CHOICES,
+        default='INDEFINIDO', verbose_name="Tipo de Contrato"
     )
     fecha_ingreso = models.DateField(verbose_name="Fecha de Ingreso")
     prevision = models.CharField(
-        max_length=20,
-        choices=PREVISION_CHOICES,
-        default='FONASA',
-        verbose_name="Previsión de Salud"
+        max_length=20, choices=PREVISION_CHOICES,
+        default='FONASA', verbose_name="Previsión de Salud"
     )
     afp = models.CharField(
-        max_length=20,
-        choices=AFP_CHOICES,
-        verbose_name="AFP"
+        max_length=20, choices=AFP_CHOICES, verbose_name="AFP"
     )
-    # Manejado 100% de forma interna por el sistema (editable=False)
     codigo_reloj_control = models.CharField(
-        max_length=20,
-        unique=True,
-        editable=False,
+        max_length=20, unique=True, editable=False,
         verbose_name="ID Interno Reloj Control"
     )
 
@@ -90,16 +77,12 @@ class Empleado(models.Model):
     fotografia = models.ImageField(
         upload_to='empleados/fotos/',
         validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png'])],
-        null=True,
-        blank=True,
-        verbose_name="Fotografía (Opcional)"
+        null=True, blank=True, verbose_name="Fotografía (Opcional)"
     )
     curriculum = models.FileField(
         upload_to='empleados/curriculums/',
         validators=[FileExtensionValidator(allowed_extensions=['pdf'])],
-        null=True,
-        blank=True,
-        verbose_name="Currículum Vitae PDF (Opcional)"
+        null=True, blank=True, verbose_name="Currículum Vitae PDF (Opcional)"
     )
 
     creado_en = models.DateTimeField(auto_now_add=True)
@@ -108,15 +91,12 @@ class Empleado(models.Model):
     @property
     def nombre_completo(self) -> str:
         partes = [
-            self.primer_nombre,
-            self.segundo_nombre,
-            self.apellido_paterno,
-            self.apellido_materno,
+            self.primer_nombre, self.segundo_nombre,
+            self.apellido_paterno, self.apellido_materno,
         ]
         return " ".join(p for p in partes if p).strip()
 
     def save(self, *args, **kwargs):
-        # Generación automática e interna del ID de Reloj Control (Ej: RC-0001)
         if not self.codigo_reloj_control:
             with transaction.atomic():
                 ultimo = Empleado.objects.select_for_update().order_by('-id').first()
@@ -140,38 +120,29 @@ class CargaFamiliar(models.Model):
     ]
 
     empleado = models.ForeignKey(
-        Empleado,
-        on_delete=models.CASCADE,
+        Empleado, on_delete=models.CASCADE,
         related_name='cargas_familiares'
     )
     rut_carga = models.CharField(
-        max_length=12,
-        validators=[validar_rut_chileno],
-        verbose_name="RUT Carga"
+        max_length=12, validators=[validar_rut_chileno], verbose_name="RUT Carga"
     )
     primer_nombre = models.CharField(max_length=50, verbose_name="Primer Nombre")
     segundo_nombre = models.CharField(
-        max_length=50,
-        blank=True,
-        default='',
+        max_length=50, blank=True, default='',
         verbose_name="Segundo Nombre (Opcional)"
     )
     apellido_paterno = models.CharField(max_length=50, verbose_name="Apellido Paterno")
     apellido_materno = models.CharField(max_length=50, verbose_name="Apellido Materno")
     fecha_nacimiento = models.DateField(verbose_name="Fecha de Nacimiento")
     parentesco = models.CharField(
-        max_length=30,
-        choices=PARENTESCO_CHOICES,
-        verbose_name="Parentesco Legal"
+        max_length=30, choices=PARENTESCO_CHOICES, verbose_name="Parentesco Legal"
     )
 
     @property
     def nombre_completo(self) -> str:
         partes = [
-            self.primer_nombre,
-            self.segundo_nombre,
-            self.apellido_paterno,
-            self.apellido_materno,
+            self.primer_nombre, self.segundo_nombre,
+            self.apellido_paterno, self.apellido_materno,
         ]
         return " ".join(p for p in partes if p).strip()
 
@@ -179,19 +150,16 @@ class CargaFamiliar(models.Model):
         return f"{self.nombre_completo} ({self.get_parentesco_display()} de {self.empleado.rut})"
 
 
-
 class RegistroAuditoria(models.Model):
     ACCION_CHOICES = [
         ('CREAR', 'Creación'),
+        ('MODIFICAR', 'Modificación'),
         ('EDITAR', 'Actualización'),
         ('ELIMINAR', 'Eliminación'),
     ]
 
     usuario = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        verbose_name="Usuario Responsable"
+        User, on_delete=models.SET_NULL, null=True, verbose_name="Usuario Responsable"
     )
     accion = models.CharField(max_length=15, choices=ACCION_CHOICES, verbose_name="Acción")
     entidad = models.CharField(max_length=50, verbose_name="Módulo / Entidad")
@@ -206,4 +174,35 @@ class RegistroAuditoria(models.Model):
 
     def __str__(self):
         user_str = self.usuario.username if self.usuario else "Sistema"
-        return f"[{self.fecha_hora:%d/%m/%Y %H:%M}] {user_str} - {self.accion} en {self.entidad}"
+        fh = timezone.localtime(self.fecha_hora)
+        return f"[{fh:%d/%m/%Y %H:%M}] {user_str} - {self.accion} en {self.entidad}"
+
+
+class DocumentoEmitido(models.Model):
+    """Trazabilidad de documentos generados (contratos y finiquitos)."""
+    TIPO_CHOICES = [
+        ('CONTRATO', 'Contrato de Trabajo'),
+        ('FINIQUITO', 'Finiquito'),
+    ]
+
+    empleado = models.ForeignKey(
+        Empleado, on_delete=models.CASCADE,
+        related_name='documentos_emitidos', verbose_name="Empleado"
+    )
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, verbose_name="Tipo de Documento")
+    parametros = models.JSONField(default=dict, verbose_name="Parámetros del Documento")
+    emitido_por = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        verbose_name="Emitido por (Usuario)"
+    )
+    fecha_emision = models.DateTimeField(auto_now_add=True, verbose_name="Fecha y Hora de Emisión")
+    actualizado_en = models.DateTimeField(auto_now=True, null=True, blank=True, verbose_name="Última Actualización")
+
+    class Meta:
+        ordering = ['-fecha_emision']
+        verbose_name = "Documento Emitido"
+        verbose_name_plural = "Documentos Emitidos"
+
+    def __str__(self):
+        fh = timezone.localtime(self.fecha_emision)
+        return f"{self.get_tipo_display()} - {self.empleado.rut} ({fh:%d/%m/%Y %H:%M})"
