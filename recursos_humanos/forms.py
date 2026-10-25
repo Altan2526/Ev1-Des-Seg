@@ -1,6 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import Empleado, CargaFamiliar, Concepto
+from .models import Empleado, CargaFamiliar, LicenciaMedica, Concepto
 from .validators import (
     limpiar_y_formatear_rut,
     validar_rut_chileno,
@@ -108,6 +108,41 @@ class CargaFamiliarForm(forms.ModelForm):
         return rut
 
 
+class LicenciaMedicaForm(forms.ModelForm):
+    class Meta:
+        model = LicenciaMedica
+        fields = ['empleado', 'fecha_inicio', 'fecha_fin', 'tipo_licencia', 'dias', 'monto', 'motivo']
+        widgets = {
+            'fecha_inicio': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'fecha_fin': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'empleado': forms.Select(attrs={'class': 'form-select'}),
+            'tipo_licencia': forms.Select(attrs={'class': 'form-select'}),
+            'dias': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'placeholder': 'Ej: 5'}),
+            'monto': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'step': '0.01', 'placeholder': 'Ej: 150000.00'}),
+            'motivo': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Detalle observaciones o diagnóstico médico...'}),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        fecha_inicio = cleaned_data.get('fecha_inicio')
+        fecha_fin = cleaned_data.get('fecha_fin')
+        dias = cleaned_data.get('dias')
+        monto = cleaned_data.get('monto')
+        motivo = cleaned_data.get('motivo')
+
+        if fecha_inicio and fecha_fin and fecha_fin < fecha_inicio:
+            self.add_error('fecha_fin', "La fecha de término no puede ser anterior a la fecha de inicio.")
+
+        if dias is not None and dias <= 0:
+            self.add_error('dias', "El número de días debe ser mayor a 0.")
+
+        if monto is not None and monto < 0:
+            self.add_error('monto', "El monto no puede ser negativo.")
+
+        if motivo is not None and not str(motivo).strip():
+            self.add_error('motivo', "El motivo u observaciones no puede estar vacío.")
+
+        return cleaned_data
 # ---------------------------------------------------------------------------
 # EV1DS-06: Formularios de Conceptos Salariales
 # ---------------------------------------------------------------------------

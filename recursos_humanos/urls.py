@@ -10,13 +10,12 @@ urlpatterns = [
     path('<int:pk>/eliminar/', views.eliminar_empleado, name='eliminar_empleado'),
     path('<int:empleado_pk>/cargas/<int:carga_pk>/eliminar/', views.eliminar_carga_familiar, name='eliminar_carga_familiar'),
     path('auditoria/', views.bitacora_auditoria, name='bitacora_auditoria'),
-
-    # Rutas de emisión de documentos (EV1DS-10)
+    path('licencias/', views.listar_licencias, name='listar_licencias'),
+    path('licencias/nueva/', views.registrar_licencia, name='registrar_licencia'),
+    path('licencias/registrar/', views.registrar_licencia, name='registrar_licencias'),
     path('documentos/', views.gestion_documentos, name='gestion_documentos'),
     path('documentos/<str:tipo>/<int:empleado_id>/', views.descargar_documento_individual, name='descargar_documento_individual'),
     path('documentos/masivo/', views.descargar_documentos_masivos, name='descargar_documentos_masivos'),
-
-    # Rutas de cálculo paramétrico de sueldos (EV1DS-06)
     path('sueldos/', views.calculo_sueldos, name='calculo_sueldos'),
     path('sueldos/concepto/', views.configurar_concepto, name='configurar_concepto'),
     path('sueldos/generar/<int:empleado_id>/', views.generar_liquidacion, name='generar_liquidacion'),

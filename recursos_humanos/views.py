@@ -10,12 +10,11 @@ from django.contrib import messages
 from django.http import HttpResponse, JsonResponse
 from django.template.loader import get_template
 from django.utils import timezone
-
 from .models import (
-    Empleado, CargaFamiliar, RegistroAuditoria, DocumentoEmitido,
+    Empleado, CargaFamiliar, LicenciaMedica, RegistroAuditoria, DocumentoEmitido,
     Concepto, LiquidacionSueldo,
 )
-from .forms import EmpleadoForm, CargaFamiliarForm, ConceptoForm
+from .forms import EmpleadoForm, CargaFamiliarForm, ConceptoForm, LicenciaMedicaForm
 
 URL_LISTA_EMPLEADOS = 'lista_empleados'
 URL_DETALLE_EMPLEADO = 'detalle_empleado'
@@ -180,9 +179,17 @@ def eliminar_carga_familiar(request, empleado_pk, carga_pk):
 @login_required
 @require_safe
 def bitacora_auditoria(request):
-    """Muestra los últimos 100 registros de auditoría, ordenados de más reciente a más antiguo."""
-    registros = RegistroAuditoria.objects.select_related('usuario').order_by('-fecha_hora')[:100]
+    """Muestra los últimos 100 registros de auditoría del sistema."""
+    registros = RegistroAuditoria.objects.select_related('usuario').all()[:100]
     return render(request, 'recursos_humanos/bitacora.html', {'registros': registros})
+
+
+@login_required
+@require_safe
+def listar_licencias(request):
+    """Lista todas las licencias médicas registradas con trazabilidad."""
+    licencias = LicenciaMedica.objects.select_related('empleado', 'registrado_por').all()
+    return render(request, 'recursos_humanos/listar_licencias.html', {'licencias': licencias})
 
 
 # =====================================================================
@@ -267,6 +274,31 @@ def gestion_documentos(request):
 
 @login_required
 @require_http_methods(["GET", "POST"])
+def registrar_licencia(request):
+    """Registra una nueva licencia médica con registro de auditoría."""
+    if request.method == 'POST':
+        form = LicenciaMedicaForm(request.POST)
+        if form.is_valid():
+            licencia = form.save(commit=False)
+            licencia.registrado_por = request.user  # Mitiga Repudiation (EV1DS-17)
+            licencia.save()
+
+            registrar_log(
+                request,
+                accion='CREAR',
+                entidad='Licencia Médica',
+                detalle=f"Se registró licencia para {licencia.empleado.nombre_completo} (RUT: {licencia.empleado.rut})."
+            )
+            messages.success(request, f"Licencia médica para {licencia.empleado.nombre_completo} registrada correctamente.")
+            return redirect('listar_licencias')
+    else:
+        form = LicenciaMedicaForm()
+    
+    return render(request, 'recursos_humanos/registrar_licencias.html', {'form': form})
+
+
+# Alias de compatibilidad
+registrar_licencias = registrar_licencia
 def descargar_documento_individual(request, tipo, empleado_id):
     """
     Emisión individual de Contrato o Finiquito en PDF.

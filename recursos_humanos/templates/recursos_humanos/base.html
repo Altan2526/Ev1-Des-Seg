@@ -25,18 +25,28 @@
                    Contratos y Finiquitos
                 </a>
 
-                <!-- 3. Bitácora de Seguridad (Se ilumina en azul si estás en la bitácora) -->
+                <!-- 3. Licencias Médicas (nueva de EV1DS-14, con patrón de main) -->
+                <a class="nav-link {% if request.resolver_match.url_name in 'listar_licencias registrar_licencia' %}text-info fw-bold active{% else %}text-white-50{% endif %}"
+                   href="{% url 'listar_licencias' %}">
+                   Licencias Médicas
+                </a>
+                <!-- 4. Registrar Licencia Médica (nueva de EV1DS-14) -->
+                <a class="nav-link {% if request.resolver_match.url_name == 'registrar_licencia' %}text-info fw-bold active{% else %}text-white-50{% endif %}"
+                   href="{% url 'registrar_licencia' %}">
+                   Registrar Licencia Médica
+                </a>
+          
+                <!-- 5. Bitácora de Seguridad -->
                 <a class="nav-link {% if request.resolver_match.url_name == 'bitacora_auditoria' %}text-info fw-bold active{% else %}text-white-50{% endif %}" 
                    href="{% url 'bitacora_auditoria' %}">
                    Bitácora de Seguridad
                 </a>
 
-                <!-- 4. Liquidaciones de Sueldo (EV1DS-06) -->
+                <!-- 6. Liquidaciones de Sueldo (EV1DS-06) -->
                 <a class="nav-link {% if request.resolver_match.url_name in 'calculo_sueldos configurar_concepto generar_liquidacion descargar_liquidacion_pdf' %}text-info fw-bold active{% else %}text-white-50{% endif %}" 
                    href="{% url 'calculo_sueldos' %}">
                    Liquidaciones de Sueldo
                 </a>
-
             </div>
 
             <div class="d-flex align-items-center gap-3">

@@ -165,10 +165,7 @@ class Empleado(models.Model):
 
     @property
     def nombre_completo(self) -> str:
-        partes = [
-            self.primer_nombre, self.segundo_nombre,
-            self.apellido_paterno, self.apellido_materno,
-        ]
+        partes = [self.primer_nombre, self.segundo_nombre, self.apellido_paterno, self.apellido_materno]
         return " ".join(p for p in partes if p).strip()
 
     def save(self, *args, **kwargs):
@@ -223,6 +220,35 @@ class CargaFamiliar(models.Model):
 
     def __str__(self):
         return f"{self.nombre_completo} ({self.get_parentesco_display()} de {self.empleado.rut})"
+
+
+class LicenciaMedica(models.Model):
+    TIPO_LICENCIA_CHOICES = [
+        ('ENFERMEDAD', 'Enfermedad Común'),
+        ('MATERNAL', 'Maternal / Postnatal'),
+        ('ACCIDENTE', 'Accidente Laboral / Trayecto'),
+        ('PATOLOGIA', 'Patología Psiquiátrica'),
+    ]
+
+    empleado = models.ForeignKey(Empleado, on_delete=models.CASCADE, related_name='licencias_medicas', verbose_name="Empleado")
+    fecha_inicio = models.DateField(verbose_name="Fecha de Inicio")
+    fecha_fin = models.DateField(verbose_name="Fecha de Término")
+    tipo_licencia = models.CharField(max_length=30, choices=TIPO_LICENCIA_CHOICES, verbose_name="Tipo de Licencia")
+    dias = models.PositiveIntegerField(verbose_name="Número de Días")
+    monto = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Monto / Subsidio Estimado")
+    motivo = models.TextField(verbose_name="Motivo / Diagnóstico u Observaciones")
+    
+    # Trazabilidad para mitigación de Repudiation (EV1DS-17)
+    registrado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Registrado por")
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Licencia Médica"
+        verbose_name_plural = "Licencias Médicas"
+        ordering = ['-fecha_inicio']
+
+    def __str__(self):
+        return f"Licencia {self.get_tipo_licencia_display()} - {self.empleado.nombre_completo} ({self.fecha_inicio} al {self.fecha_fin})"
 
 
 class RegistroAuditoria(models.Model):

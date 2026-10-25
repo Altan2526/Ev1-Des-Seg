@@ -1,0 +1,137 @@
+{% extends 'recursos_humanos/base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Módulo de Recursos Humanos - Registro de Licencias Médicas</h4>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-4">
+                    Todos los campos marcados con <span class="text-danger fw-bold">*</span> son obligatorios.
+                </p>
+
+                <form method="post" id="formLicencia" novalidate>
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label for="{{ form.empleado.id_for_label }}" class="form-label fw-bold">
+                            {{ form.empleado.label }}<span class="text-danger ms-1">*</span>
+                        </label>
+                        {{ form.empleado }}
+                        <div class="form-text">Seleccione el empleado que presenta la licencia médica.</div>
+                        <div class="text-danger small mt-1" id="error_{{ form.empleado.id_for_label }}">
+                            {% if form.empleado.errors %}{{ form.empleado.errors|striptags }}{% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.fecha_inicio.id_for_label }}" class="form-label fw-bold">
+                                {{ form.fecha_inicio.label }}<span class="text-danger ms-1">*</span>
+                            </label>
+                            {{ form.fecha_inicio }}
+                            <div class="text-danger small mt-1" id="error_{{ form.fecha_inicio.id_for_label }}">
+                                {% if form.fecha_inicio.errors %}{{ form.fecha_inicio.errors|striptags }}{% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.fecha_fin.id_for_label }}" class="form-label fw-bold">
+                                {{ form.fecha_fin.label }}<span class="text-danger ms-1">*</span>
+                            </label>
+                            {{ form.fecha_fin }}
+                            <div class="text-danger small mt-1" id="error_{{ form.fecha_fin.id_for_label }}">
+                                {% if form.fecha_fin.errors %}{{ form.fecha_fin.errors|striptags }}{% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.tipo_licencia.id_for_label }}" class="form-label fw-bold">
+                                {{ form.tipo_licencia.label }}<span class="text-danger ms-1">*</span>
+                            </label>
+                            {{ form.tipo_licencia }}
+                            <div class="text-danger small mt-1" id="error_{{ form.tipo_licencia.id_for_label }}">
+                                {% if form.tipo_licencia.errors %}{{ form.tipo_licencia.errors|striptags }}{% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.dias.id_for_label }}" class="form-label fw-bold">
+                                {{ form.dias.label }}<span class="text-danger ms-1">*</span>
+                            </label>
+                            {{ form.dias }}
+                            <div class="text-danger small mt-1" id="error_{{ form.dias.id_for_label }}">
+                                {% if form.dias.errors %}{{ form.dias.errors|striptags }}{% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.monto.id_for_label }}" class="form-label fw-bold">
+                            {{ form.monto.label }}<span class="text-danger ms-1">*</span>
+                        </label>
+                        {{ form.monto }}
+                        <div class="form-text">Monto estimado correspondiente al subsidio o cobertura.</div>
+                        <div class="text-danger small mt-1" id="error_{{ form.monto.id_for_label }}">
+                            {% if form.monto.errors %}{{ form.monto.errors|striptags }}{% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.motivo.id_for_label }}" class="form-label fw-bold">
+                            {{ form.motivo.label }}<span class="text-danger ms-1">*</span>
+                        </label>
+                        {{ form.motivo }}
+                        <div class="form-text">Detalle observaciones, diagnóstico u orden médica.</div>
+                        <div class="text-danger small mt-1" id="error_{{ form.motivo.id_for_label }}">
+                            {% if form.motivo.errors %}{{ form.motivo.errors|striptags }}{% endif %}
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-start mt-4">
+                        <button type="submit" class="btn btn-success">Guardar Licencia Médica</button>
+                        <a href="{% url 'listar_licencias' %}" class="btn btn-secondary">Volver al Panel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const fechaInicio = document.getElementById("id_fecha_inicio");
+    const fechaFin = document.getElementById("id_fecha_fin");
+    const diasInput = document.getElementById("id_dias");
+
+    function calcularDias() {
+        if (fechaInicio && fechaFin && diasInput) {
+            const valInicio = fechaInicio.value;
+            const valFin = fechaFin.value;
+            if (valInicio && valFin) {
+                const inicio = new Date(valInicio);
+                const fin = new Date(valFin);
+                if (fin >= inicio) {
+                    const diffTime = fin.getTime() - inicio.getTime();
+                    const diffDays = Math.round(diffTime / (1000 * 3600 * 24)) + 1;
+                    diasInput.value = diffDays;
+                }
+            }
+        }
+    }
+
+    if (fechaInicio && fechaFin) {
+        fechaInicio.addEventListener("change", calcularDias);
+        fechaFin.addEventListener("change", calcularDias);
+    }
+});
+</script>
+{% endblock %}
