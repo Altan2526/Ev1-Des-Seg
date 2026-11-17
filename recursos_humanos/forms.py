@@ -80,6 +80,18 @@ class EmpleadoForm(forms.ModelForm):
             raise ValidationError("El currículum en PDF no puede superar los 5MB.")
         return cv
 
+    def clean_fotografia(self):
+        foto = self.cleaned_data.get('fotografia')
+        if foto and hasattr(foto, 'read'):
+            validar_mime_real(foto, ('jpg', 'jpeg', 'png'))
+        return foto
+
+    def clean_curriculum(self):
+        cv = self.cleaned_data.get('curriculum')
+        if cv and hasattr(cv, 'read'):
+            validar_mime_real(cv, ('pdf',))
+        return cv
+
 
 class CargaFamiliarForm(forms.ModelForm):
     class Meta:
