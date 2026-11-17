@@ -1,11 +1,12 @@
-from django.db import models, transaction
-from django.utils import timezone
-from django.core.validators import FileExtensionValidator, MinValueValidator
-from django.contrib.auth.models import User
-from .validators import validar_rut_chileno
-
 import ast
 import operator
+
+from django.contrib.auth.models import User
+from django.core.validators import FileExtensionValidator, MinValueValidator
+from django.db import models, transaction
+from django.utils import timezone
+
+from .validators import validar_rut_chileno
 
 # ---------------------------------------------------------------------------
 # Safe arithmetic parser (AST-based — NEVER uses eval())
@@ -234,8 +235,8 @@ class LicenciaMedica(models.Model):
     fecha_inicio = models.DateField(verbose_name="Fecha de Inicio")
     fecha_fin = models.DateField(verbose_name="Fecha de Término")
     tipo_licencia = models.CharField(max_length=30, choices=TIPO_LICENCIA_CHOICES, verbose_name="Tipo de Licencia")
-    dias = models.PositiveIntegerField(verbose_name="Número de Días")
-    monto = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Monto / Subsidio Estimado")
+    dias = models.PositiveIntegerField(validators=[MinValueValidator(1)], verbose_name="Número de Días")
+    monto = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)], verbose_name="Monto / Subsidio Estimado")
     motivo = models.TextField(verbose_name="Motivo / Diagnóstico u Observaciones")
     
     # Trazabilidad para mitigación de Repudiation (EV1DS-17)
@@ -385,7 +386,7 @@ class Concepto(models.Model):
         """
         if self.formula:
             resultado = safe_eval_arithmetic(self.formula, contexto)
-            return int(round(resultado))
+            return round(resultado)
         return self.monto_fijo
 
 
@@ -405,10 +406,10 @@ class LiquidacionSueldo(models.Model):
         DocumentoEmitido, on_delete=models.SET_NULL, null=True, blank=True,
         related_name='liquidaciones', verbose_name="Contrato de Origen (EV1DS-10)"
     )
-    sueldo_base = models.IntegerField(verbose_name="Sueldo Base (CLP)")
-    total_haberes = models.IntegerField(verbose_name="Total Haberes")
-    total_descuentos = models.IntegerField(verbose_name="Total Descuentos")
-    sueldo_liquido = models.IntegerField(verbose_name="Sueldo Líquido")
+    sueldo_base = models.IntegerField(validators=[MinValueValidator(0)], verbose_name="Sueldo Base (CLP)")
+    total_haberes = models.IntegerField(validators=[MinValueValidator(0)], verbose_name="Total Haberes")
+    total_descuentos = models.IntegerField(validators=[MinValueValidator(0)], verbose_name="Total Descuentos")
+    sueldo_liquido = models.IntegerField(validators=[MinValueValidator(0)], verbose_name="Sueldo Líquido")
     detalle_conceptos = models.JSONField(
         default=dict, verbose_name="Detalle de Conceptos Aplicados"
     )

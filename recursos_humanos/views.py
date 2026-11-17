@@ -1,20 +1,46 @@
+import datetime
 import io
 import json
 import zipfile
-import datetime
 
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_http_methods, require_safe, require_POST
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import get_template
 from django.utils import timezone
-from .models import (
-    Empleado, CargaFamiliar, LicenciaMedica, RegistroAuditoria, DocumentoEmitido,
-    Concepto, LiquidacionSueldo,
+from django.views.decorators.http import (
+    require_http_methods,
+    require_POST,
+    require_safe,
 )
-from .forms import EmpleadoForm, CargaFamiliarForm, ConceptoForm, LicenciaMedicaForm
+
+from .forms import CargaFamiliarForm, ConceptoForm, EmpleadoForm, LicenciaMedicaForm
+from .models import (
+    CargaFamiliar,
+    Concepto,
+    DocumentoEmitido,
+    Empleado,
+    LicenciaMedica,
+    LiquidacionSueldo,
+    RegistroAuditoria,
+)
+
+from .security_utils import (
+    enmascarar_rut_log,
+    extraer_ids_enteros_positivos,
+    sanitizar_directivas_ssi,
+    sanitizar_texto_log,
+)
+
+VISTA_LISTA_EMPLEADOS = 'lista_empleados'
+VISTA_GESTION_DOCUMENTOS = 'gestion_documentos'
+VISTA_SUELDOS = 'sueldos'
+VISTA_LICENCIAS = 'licencias'
+
+ACCION_CREAR = 'CREAR'
+ACCION_EDITAR = 'EDITAR'
+ACCION_ELIMINAR = 'ELIMINAR'
 
 URL_LISTA_EMPLEADOS = 'lista_empleados'
 URL_DETALLE_EMPLEADO = 'detalle_empleado'
@@ -32,6 +58,19 @@ SUELDO_BASE_DEFAULT = 650000
 JORNADA_DEFAULT = '40 horas semanales'
 CAUSAL_DEFAULT = 'Artículo 161 Inciso 1: Necesidades de la Empresa'
 
+def _obtener_ip_cliente(request) -> str:
+    """Extrae y sanitiza la IP de origen de la petición HTTP."""
+    return sanitizar_texto_log(request.META.get('REMOTE_ADDR', '0.0.0.0'), 45)
+
+
+def _parse_entero_positivo(valor_raw, default: int = 0) -> int:
+    """Convierte de forma segura una entrada a entero >= 0 sin duplicar try/except."""
+    try:
+        numero = int(str(valor_raw).strip())
+        return numero if numero >= 0 else default
+    except (ValueError, TypeError):
+        return default
+    
 
 def registrar_log(request, accion: str, entidad: str, detalle: str) -> None:
     """Registra eventos críticos del módulo para trazabilidad y no repudio."""
@@ -42,6 +81,18 @@ def registrar_log(request, accion: str, entidad: str, detalle: str) -> None:
         detalle=detalle, ip_origen=ip
     )
 
+def registrar_auditoria(request, accion, modelo, detalle):
+    """
+    Registra eventos de forma segura en RegistroAuditoria neutralizando CWE-117.
+    """
+    ip = sanitizar_texto_log(request.META.get('REMOTE_ADDR', '0.0.0.0'), 45)
+    RegistroAuditoria.objects.create(
+        usuario=request.user if request.user.is_authenticated else None,
+        accion=sanitizar_texto_log(accion, 50),
+        modelo_afectado=sanitizar_texto_log(modelo, 100),
+        detalle=sanitizar_texto_log(detalle, 400),
+        ip_origen=ip,
+    )
 
 def html_to_pdf_bytes(template_src, context_dict):
     """
@@ -387,13 +438,28 @@ def descargar_documentos_masivos(request):
     if tipo not in ('contrato', 'finiquito'):
         return JsonResponse({'error': "Tipo de documento no válido."}, status=400)
 
-    empleados_ids = data.get('empleados_ids', [])
+    if hasattr(data, 'getlist'):
+        raw_ids = data.getlist('empleados_ids')
+    else:
+        raw_ids = data.get('empleados_ids', [])
+        if not isinstance(raw_ids, list):
+            return JsonResponse({'error': 'empleados_ids debe ser una lista de enteros.'}, status=400)
+
+    try:
+        empleados_ids = extraer_ids_enteros_positivos(raw_ids)
+    except ValueError as err:
+        registrar_log(
+            request,
+            'MODIFICAR',
+            'DocumentoEmitido',
+            f"Bloqueo de payload inválido/SSI en emisión masiva: {err!s}",
+        )
+        return JsonResponse({'error': 'Parámetros empleados_ids inválidos.'}, status=400)
+
     if not empleados_ids:
         return JsonResponse({'error': 'Debe proporcionar una lista de empleados_ids.'}, status=400)
 
     empleados = Empleado.objects.filter(id__in=empleados_ids)
-    if not empleados.exists():
-        return JsonResponse({'error': 'No se encontraron empleados con los IDs indicados.'}, status=404)
 
     tipo_db = 'CONTRATO' if tipo == 'contrato' else 'FINIQUITO'
 
@@ -646,7 +712,7 @@ def generar_liquidacion(request, empleado_id):
     - Registra en la bitácora y genera el PDF en memoria.
     """
     empleado = get_object_or_404(Empleado, pk=empleado_id)
-    sueldo_base, jornada, contrato_doc = _obtener_sueldo_base(empleado)
+    sueldo_base, _jornada, _contrato_doc = _obtener_sueldo_base(empleado)
 
     if sueldo_base is None:
         # Sin contrato vigente: alerta con enlace a EV1DS-10
@@ -673,7 +739,7 @@ def generar_liquidacion(request, empleado_id):
     try:
         liquidacion = _calcular_liquidacion(empleado, sueldo_base, periodo, request)
     except ValueError as e:
-        return JsonResponse({'error': f'Error en el cálculo: {str(e)}'}, status=400)
+        return JsonResponse({'error': f'Error en el cálculo: {e!s}'}, status=400)
 
     # Redirigir a vista previa (descarga PDF opcional desde allí)
     messages.success(

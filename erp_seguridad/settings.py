@@ -13,24 +13,52 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
+import secrets
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+env_path = BASE_DIR / '.env'
+if env_path.exists():
+    with open(env_path, encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                key, value = line.split('=', 1)
+                os.environ.setdefault(key.strip(), value.strip())
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
+DEBUG = os.environ.get('DJANGO_DEBUG', 'False').strip().lower() == 'true'
 
-ALLOWED_HOSTS = []
+raw_hosts = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in raw_hosts.split(',')
+    if host.strip() and host.strip() != '*'
+]
+
+if not ALLOWED_HOSTS:
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', '').strip()
+
+if not SECRET_KEY or SECRET_KEY.startswith('django-insecure-') or len(SECRET_KEY) < 32:
+    if not DEBUG:
+        raise ImproperlyConfigured(
+            "Error crítico de seguridad (EV1DS-34): DJANGO_SECRET_KEY debe definirse en .env "
+            "con una clave aleatoria de al menos 32 caracteres cuando DEBUG=False."
+        )
+    SECRET_KEY = secrets.token_hex(32)
+    
 # Application definition
 
 INSTALLED_APPS = [
@@ -136,6 +164,10 @@ MEDIA_ROOT = BASE_DIR / 'media'
 LOGIN_URL = 'login/'
 LOGIN_REDIRECT_URL = 'lista_empleados'
 LOGOUT_REDIRECT_URL = 'login'
+
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 200
 
 X_FRAME_OPTIONS = 'DENY'
 SECURE_CONTENT_TYPE_NOSNIFF = True
