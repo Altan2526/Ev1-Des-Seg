@@ -1,7 +1,12 @@
 from django.contrib import admin
+
 from .models import (
-    Empleado, CargaFamiliar, RegistroAuditoria, DocumentoEmitido,
-    Concepto, LiquidacionSueldo,
+    CargaFamiliar,
+    Concepto,
+    DocumentoEmitido,
+    Empleado,
+    LiquidacionSueldo,
+    RegistroAuditoria,
 )
 
 admin.site.register(Empleado)

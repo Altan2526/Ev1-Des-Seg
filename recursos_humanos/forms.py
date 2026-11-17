@@ -1,13 +1,19 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import Empleado, CargaFamiliar, LicenciaMedica, Concepto
+
+from .models import (
+    CargaFamiliar,
+    Concepto,
+    Empleado,
+    LicenciaMedica,
+    safe_eval_arithmetic,
+)
 from .validators import (
     limpiar_y_formatear_rut,
-    validar_rut_chileno,
     limpiar_y_formatear_telefono,
+    validar_rut_chileno,
     validar_telefono_chileno,
 )
-from .models import safe_eval_arithmetic
 
 
 class EmpleadoForm(forms.ModelForm):

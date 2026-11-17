@@ -3,6 +3,7 @@ Filtros de plantilla para el módulo de Recursos Humanos.
 """
 import re
 from datetime import datetime
+
 from django import template
 from django.utils import timezone
 

@@ -1,21 +1,40 @@
+import datetime
 import io
 import json
 import zipfile
-import datetime
 
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_http_methods, require_safe, require_POST
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import get_template
 from django.utils import timezone
-from .security_utils import sanitizar_texto_log, enmascarar_rut_log
-from .models import (
-    Empleado, CargaFamiliar, LicenciaMedica, RegistroAuditoria, DocumentoEmitido,
-    Concepto, LiquidacionSueldo,
+from django.views.decorators.http import (
+    require_http_methods,
+    require_POST,
+    require_safe,
 )
-from .forms import EmpleadoForm, CargaFamiliarForm, ConceptoForm, LicenciaMedicaForm
+
+from .forms import CargaFamiliarForm, ConceptoForm, EmpleadoForm, LicenciaMedicaForm
+from .models import (
+    CargaFamiliar,
+    Concepto,
+    DocumentoEmitido,
+    Empleado,
+    LicenciaMedica,
+    LiquidacionSueldo,
+    RegistroAuditoria,
+)
+from .security_utils import sanitizar_texto_log
+
+VISTA_LISTA_EMPLEADOS = 'lista_empleados'
+VISTA_GESTION_DOCUMENTOS = 'gestion_documentos'
+VISTA_SUELDOS = 'sueldos'
+VISTA_LICENCIAS = 'licencias'
+
+ACCION_CREAR = 'CREAR'
+ACCION_EDITAR = 'EDITAR'
+ACCION_ELIMINAR = 'ELIMINAR'
 
 URL_LISTA_EMPLEADOS = 'lista_empleados'
 URL_DETALLE_EMPLEADO = 'detalle_empleado'
@@ -33,6 +52,19 @@ SUELDO_BASE_DEFAULT = 650000
 JORNADA_DEFAULT = '40 horas semanales'
 CAUSAL_DEFAULT = 'Artículo 161 Inciso 1: Necesidades de la Empresa'
 
+def _obtener_ip_cliente(request) -> str:
+    """Extrae y sanitiza la IP de origen de la petición HTTP."""
+    return sanitizar_texto_log(request.META.get('REMOTE_ADDR', '0.0.0.0'), 45)
+
+
+def _parse_entero_positivo(valor_raw, default: int = 0) -> int:
+    """Convierte de forma segura una entrada a entero >= 0 sin duplicar try/except."""
+    try:
+        numero = int(str(valor_raw).strip())
+        return numero if numero >= 0 else default
+    except (ValueError, TypeError):
+        return default
+    
 
 def registrar_log(request, accion: str, entidad: str, detalle: str) -> None:
     """Registra eventos críticos del módulo para trazabilidad y no repudio."""
@@ -659,7 +691,7 @@ def generar_liquidacion(request, empleado_id):
     - Registra en la bitácora y genera el PDF en memoria.
     """
     empleado = get_object_or_404(Empleado, pk=empleado_id)
-    sueldo_base, jornada, contrato_doc = _obtener_sueldo_base(empleado)
+    sueldo_base, _jornada, _contrato_doc = _obtener_sueldo_base(empleado)
 
     if sueldo_base is None:
         # Sin contrato vigente: alerta con enlace a EV1DS-10
@@ -686,7 +718,7 @@ def generar_liquidacion(request, empleado_id):
     try:
         liquidacion = _calcular_liquidacion(empleado, sueldo_base, periodo, request)
     except ValueError as e:
-        return JsonResponse({'error': f'Error en el cálculo: {str(e)}'}, status=400)
+        return JsonResponse({'error': f'Error en el cálculo: {e!s}'}, status=400)
 
     # Redirigir a vista previa (descarga PDF opcional desde allí)
     messages.success(
