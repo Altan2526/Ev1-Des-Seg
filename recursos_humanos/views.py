@@ -10,9 +10,10 @@ from django.contrib import messages
 from django.http import HttpResponse, JsonResponse
 from django.template.loader import get_template
 from django.utils import timezone
+from .security_utils import sanitizar_texto_log, enmascarar_rut_log
 from .models import (
     Empleado, CargaFamiliar, LicenciaMedica, RegistroAuditoria, DocumentoEmitido,
-    Concepto, LiquidacionSueldo,
+    Concepto, LiquidacionSueldo, BitacoraAuditoria,
 )
 from .forms import EmpleadoForm, CargaFamiliarForm, ConceptoForm, LicenciaMedicaForm
 
@@ -42,6 +43,18 @@ def registrar_log(request, accion: str, entidad: str, detalle: str) -> None:
         detalle=detalle, ip_origen=ip
     )
 
+def registrar_auditoria(request, accion, modelo, detalle):
+    """
+    Registra eventos de forma segura en BitacoraAuditoria neutralizando CWE-117.
+    """
+    ip = sanitizar_texto_log(request.META.get('REMOTE_ADDR', '0.0.0.0'), 45)
+    BitacoraAuditoria.objects.create(
+        usuario=request.user if request.user.is_authenticated else None,
+        accion=sanitizar_texto_log(accion, 50),
+        modelo_afectado=sanitizar_texto_log(modelo, 100),
+        detalle=sanitizar_texto_log(detalle, 400),
+        ip_origen=ip,
+    )
 
 def html_to_pdf_bytes(template_src, context_dict):
     """
