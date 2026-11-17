@@ -49,4 +49,11 @@ class ContentSecurityPolicyMiddleware:
                  response['Pragma'] = 'no-cache'
                  response['Expires'] = '0'
 
+        if 'Cross-Origin-Opener-Policy' not in response:
+                response['Cross-Origin-Opener-Policy'] = 'same-origin'
+        if 'Cross-Origin-Resource-Policy' not in response:
+                response['Cross-Origin-Resource-Policy'] = 'same-origin'
+
+
+
         return response
