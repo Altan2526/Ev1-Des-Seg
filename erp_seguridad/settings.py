@@ -51,6 +51,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'erp_seguridad.middleware.ContentSecurityPolicyMiddleware',
 ]
 
 ROOT_URLCONF = 'erp_seguridad.urls'
@@ -135,3 +136,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 LOGIN_URL = 'login/'
 LOGIN_REDIRECT_URL = 'lista_empleados'
 LOGOUT_REDIRECT_URL = 'login'
+
+X_FRAME_OPTIONS = 'DENY'
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = 'same-origin'
