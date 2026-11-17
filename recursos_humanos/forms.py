@@ -1,3 +1,4 @@
+import re
 from django import forms
 from django.core.exceptions import ValidationError
 
@@ -10,6 +11,17 @@ from .validators import (
 )
 from .models import safe_eval_arithmetic
 from .security_utils import validar_mime_real
+
+REGEX_NOMBRE_PERSONA = re.compile(r"^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s'-]{2,50}$")
+REGEX_CARGO_DIRECCION = re.compile(r"^[A-Za-z0-9ÁÉÍÓÚáéíóúÑñÜü\s.,#°º()/-]{2,255}$")
+REGEX_TELEFONO = re.compile(r"^[0-9+\s()-]{7,20}$")
+
+
+def _validar_lista_blanca(valor: str, regex_patron, mensaje_error: str) -> str:
+    texto = (valor or '').strip()
+    if not regex_patron.match(texto):
+        raise ValidationError(mensaje_error)
+    return texto
 
 class EmpleadoForm(forms.ModelForm):
     class Meta:
@@ -91,6 +103,58 @@ class EmpleadoForm(forms.ModelForm):
         if cv and hasattr(cv, 'read'):
             validar_mime_real(cv, ('pdf',))
         return cv
+
+    def clean_primer_nombre(self):
+        return _validar_lista_blanca(
+            self.cleaned_data.get('primer_nombre'),
+            REGEX_NOMBRE_PERSONA,
+            "El primer nombre solo admite letras, espacios, apóstrofes o guiones."
+        )
+
+    def clean_segundo_nombre(self):
+        val = (self.cleaned_data.get('segundo_nombre') or '').strip()
+        if not val:
+            return ''
+        return _validar_lista_blanca(
+            val,
+            REGEX_NOMBRE_PERSONA,
+            "El segundo nombre solo admite letras, espacios, apóstrofes o guiones."
+        )
+
+    def clean_apellido_paterno(self):
+        return _validar_lista_blanca(
+            self.cleaned_data.get('apellido_paterno'),
+            REGEX_NOMBRE_PERSONA,
+            "El apellido paterno solo admite letras, espacios, apóstrofes o guiones."
+        )
+
+    def clean_apellido_materno(self):
+        return _validar_lista_blanca(
+            self.cleaned_data.get('apellido_materno'),
+            REGEX_NOMBRE_PERSONA,
+            "El apellido materno solo admite letras, espacios, apóstrofes o guiones."
+        )
+
+    def clean_cargo(self):
+        return _validar_lista_blanca(
+            self.cleaned_data.get('cargo'),
+            REGEX_CARGO_DIRECCION,
+            "El cargo contiene caracteres especiales no permitidos."
+        )
+
+    def clean_direccion(self):
+        return _validar_lista_blanca(
+            self.cleaned_data.get('direccion'),
+            REGEX_CARGO_DIRECCION,
+            "La dirección contiene caracteres especiales no permitidos."
+        )
+
+    def clean_telefono(self):
+        return _validar_lista_blanca(
+            self.cleaned_data.get('telefono'),
+            REGEX_TELEFONO,
+            "El teléfono solo admite dígitos y símbolos telefónicos (+, -, paréntesis)."
+        )
 
 
 class CargaFamiliarForm(forms.ModelForm):
