@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
+import secrets
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -31,7 +33,7 @@ if env_path.exists():
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DJANGO_DEBUG', 'False').strip().lower() == 'true'
@@ -46,6 +48,17 @@ ALLOWED_HOSTS = [
 if not ALLOWED_HOSTS:
     ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
+
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', '').strip()
+
+if not SECRET_KEY or SECRET_KEY.startswith('django-insecure-') or len(SECRET_KEY) < 32:
+    if not DEBUG:
+        raise ImproperlyConfigured(
+            "Error crítico de seguridad (EV1DS-34): DJANGO_SECRET_KEY debe definirse en .env "
+            "con una clave aleatoria de al menos 32 caracteres cuando DEBUG=False."
+        )
+    SECRET_KEY = secrets.token_hex(32)
+    
 # Application definition
 
 INSTALLED_APPS = [
