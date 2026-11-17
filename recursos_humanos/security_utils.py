@@ -59,3 +59,32 @@ def validar_mime_real(archivo, formatos_permitidos: tuple):
             f"El contenido binario del archivo no corresponde a un formato válido "
             f"({', '.join(fmt.upper() for fmt in formatos_permitidos)})."
         )
+
+def sanitizar_directivas_ssi(valor: str) -> str:
+    """
+    EV1DS-41 (CWE-97): Neutraliza cualquier intento de inyección de directivas
+    Server-Side Include (<!--#exec, <!--#include, etc.) antes de renderizar HTML/PDF.
+    """
+    if valor is None:
+        return ""
+    texto = str(valor)
+    return re.sub(r'<!--\s*#', '&lt;!--#', texto, flags=re.IGNORECASE)
+
+
+def extraer_ids_enteros_positivos(lista_raw) -> list[int]:
+    """
+    EV1DS-41 (CWE-20 / CWE-97): Filtra y valida estrictamente una lista de IDs
+    enviados por POST/GET. Si alguno contiene texto malicioso o SSI, lanza ValueError.
+    """
+    if not lista_raw:
+        return []
+    ids_limpios = []
+    for item in lista_raw:
+        cadena = str(item).strip()
+        if not cadena.isdigit():
+            raise ValueError(f"Identificador inválido detectado: '{sanitizar_texto_log(cadena, 40)}'")
+        numero = int(cadena)
+        if numero <= 0:
+            raise ValueError("Los identificadores deben ser enteros positivos.")
+        ids_limpios.append(numero)
+    return ids_limpios
