@@ -377,20 +377,20 @@
                                             </div>
                                             <div class="modal-body text-start">
                                                 <div class="mb-3">
-                                                    <label class="form-label fw-bold">Tipo de Contrato</label>
-                                                    <select name="tipo_contrato" class="form-select form-select-sm">
+                                                    <label for="id_tipo_contratoedit{{ emp.id }}" class="form-label small mb-1">Tipo de Contrato</label>
+                                                    <select id="id_tipo_contratoedit{{ emp.id }}" name="tipo_contrato" class="form-select form-select-sm">
                                                         <option value="Plazo Indefinido" {% if cp.tipo_contrato == 'Plazo Indefinido' %}selected{% endif %}>Plazo Indefinido</option>
                                                         <option value="Plazo Fijo" {% if cp.tipo_contrato == 'Plazo Fijo' %}selected{% endif %}>Plazo Fijo</option>
                                                         <option value="Por Obra o Faena" {% if cp.tipo_contrato == 'Por Obra o Faena' %}selected{% endif %}>Por Obra o Faena</option>
                                                     </select>
                                                 </div>
                                                 <div class="mb-3">
-                                                    <label class="form-label fw-bold">Sueldo Base Mensual ($)</label>
-                                                    <input type="number" name="sueldo_base" class="form-control form-control-sm" value="{{ cp.sueldo_base }}" min="0" required>
+                                                    <label for="id_sueldo_baseedit{{ emp.id }}" class="form-label small mb-1">Sueldo Base</label>
+                                                <input type="number" id="id_sueldo_baseedit{{ emp.id }}" name="sueldo_base" class="form-control form-control-sm" value="{{ cp.sueldo_base }}" min="0" required>
                                                 </div>
                                                 <div class="mb-3">
-                                                    <label class="form-label fw-bold">Jornada Semanal</label>
-                                                    <input type="text" name="jornada" class="form-control form-control-sm" value="{{ cp.jornada }}">
+                                                    <label for="id_jornadaedit{{ emp.id }}" class="form-label small mb-1">Jornada</label>
+                                                    <input type="text" id="id_jornadaedit{{ emp.id }}" name="jornada" class="form-control form-control-sm" value="{{ cp.jornada }}">
                                                 </div>
                                             </div>
                                             <div class="modal-footer">
@@ -414,8 +414,8 @@
                                             </div>
                                             <div class="modal-body text-start">
                                                 <div class="mb-3">
-                                                    <label class="form-label fw-bold">Tipo de Contrato</label>
-                                                    <select name="tipo_contrato" class="form-select form-select-sm">
+                                                    <label for="id_tipo_contratonew{{ emp.id }}" class="form-label small mb-1">Tipo de Contrato</label>
+                                                    <select id="id_tipo_contratonew{{ emp.id }}" name="tipo_contrato" class="form-select form-select-sm">
                                                         <option value="Plazo Indefinido" selected>Plazo Indefinido</option>
                                                         <option value="Plazo Fijo">Plazo Fijo</option>
                                                         <option value="Por Obra o Faena">Por Obra o Faena</option>
@@ -426,8 +426,8 @@
                                                     <input type="number" name="sueldo_base" class="form-control form-control-sm" value="650000" min="0" required>
                                                 </div>
                                                 <div class="mb-3">
-                                                    <label class="form-label fw-bold">Jornada Semanal</label>
-                                                    <input type="text" name="jornada" class="form-control form-control-sm" value="40 horas semanales">
+                                                    <label for="id_jornadanew{{ emp.id }}" class="form-label small mb-1">Jornada</label>
+                                                    <input type="text" id="id_jornadanew{{ emp.id }}" name="jornada" class="form-control form-control-sm" value="40 horas semanales">
                                                 </div>
                                             </div>
                                             <div class="modal-footer">
@@ -507,8 +507,8 @@
                                             </div>
                                             <div class="modal-body text-start">
                                                 <div class="mb-3">
-                                                    <label class="form-label fw-bold">Causal de Despido / Término *</label>
-                                                    <select name="causal" class="form-select form-select-sm" required>
+                                                    <label for="id_causalnew{{ emp.id }}" class="form-label small mb-1">Causal</label>
+                                                    <select id="id_causalnew{{ emp.id }}" name="causal" class="form-select form-select-sm" required>
                                                         <option value="Artículo 161 Inciso 1: Necesidades de la Empresa" selected>Art. 161 Inc. 1: Necesidades de la Empresa</option>
                                                         <option value="Artículo 159 N° 1: Mutuo Acuerdo de las Partes">Art. 159 N° 1: Mutuo Acuerdo</option>
                                                         <option value="Artículo 159 N° 2: Renuncia Voluntaria del Trabajador">Art. 159 N° 2: Renuncia Voluntaria</option>
@@ -517,25 +517,25 @@
                                                     </select>
                                                 </div>
                                                 <div class="mb-3">
-                                                    <label class="form-label fw-bold">Fecha de Término</label>
-                                                    <input type="date" name="fecha_termino" class="form-control form-control-sm" required>
+                                                    <label for="id_fecha_terminonew{{ emp.id }}" class="form-label small mb-1">Fecha Término</label>
+                                                    <input type="date" id="id_fecha_terminonew{{ emp.id }}" name="fecha_termino" class="form-control form-control-sm" required>
                                                 </div>
                                                 <div class="row g-2">
                                                     <div class="col-6">
-                                                        <label class="form-label small">Años de Servicio ($)</label>
-                                                        <input type="number" name="monto_anos" class="form-control form-control-sm" value="0">
+                                                        <label for="id_monto_anosnew{{ emp.id }}" class="form-label small mb-1">Años Servicio</label>
+                                                        <input type="number" id="id_monto_anosnew{{ emp.id }}" name="monto_anos" class="form-control form-control-sm" value="0" min="0">
                                                     </div>
                                                     <div class="col-6">
-                                                        <label class="form-label small">Mes de Aviso ($)</label>
-                                                        <input type="number" name="monto_aviso" class="form-control form-control-sm" value="0">
+                                                        <label for="id_monto_avisonew{{ emp.id }}" class="form-label small mb-1">Aviso Previo</label>
+                                                    <input type="number" id="id_monto_avisonew{{ emp.id }}" name="monto_aviso" class="form-control form-control-sm" value="0" min="0">
                                                     </div>
                                                     <div class="col-6">
-                                                        <label class="form-label small">Vacaciones Pendientes ($)</label>
-                                                        <input type="number" name="monto_feriado" class="form-control form-control-sm" value="150000">
+                                                        <label for="id_monto_feriadonew{{ emp.id }}" class="form-label small mb-1">Feriado Proporcional</label>
+                                                        <input type="number" id="id_monto_feriadonew{{ emp.id }}" name="monto_feriado" class="form-control form-control-sm" value="150000" min="0">
                                                     </div>
                                                     <div class="col-6">
-                                                        <label class="form-label small">Días Pendientes ($)</label>
-                                                        <input type="number" name="monto_pendientes" class="form-control form-control-sm" value="200000">
+                                                        <label for="id_monto_pendientesnew{{ emp.id }}" class="form-label small mb-1">Días Pendientes</label>
+                                                        <input type="number" id="id_monto_pendientesnew{{ emp.id }}" name="monto_pendientes" class="form-control form-control-sm" value="200000" min="0">
                                                     </div>
                                                 </div>
                                             </div>
