@@ -34,4 +34,19 @@ class ContentSecurityPolicyMiddleware:
                         "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
                     )
 
+        # EV1DS-44 (CWE-200): Ocultar versión exacta de Python/WSGI en cabecera Server
+        response['Server'] = 'SeguridadLTDA-ERP'
+        if 'X-Powered-By' in response:
+            del response['X-Powered-By']
+
+        # EV1DS-44 (CWE-525): Evitar caché en vistas autenticadas con datos sensibles de RRHH
+        if (
+                 hasattr(request, 'user')
+                 and request.user.is_authenticated
+                 and 'Cache-Control' not in response
+             ):
+                 response['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+                 response['Pragma'] = 'no-cache'
+                 response['Expires'] = '0'
+
         return response
