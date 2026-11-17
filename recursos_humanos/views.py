@@ -13,7 +13,7 @@ from django.utils import timezone
 from .security_utils import sanitizar_texto_log, enmascarar_rut_log
 from .models import (
     Empleado, CargaFamiliar, LicenciaMedica, RegistroAuditoria, DocumentoEmitido,
-    Concepto, LiquidacionSueldo, BitacoraAuditoria,
+    Concepto, LiquidacionSueldo,
 )
 from .forms import EmpleadoForm, CargaFamiliarForm, ConceptoForm, LicenciaMedicaForm
 
@@ -45,10 +45,10 @@ def registrar_log(request, accion: str, entidad: str, detalle: str) -> None:
 
 def registrar_auditoria(request, accion, modelo, detalle):
     """
-    Registra eventos de forma segura en BitacoraAuditoria neutralizando CWE-117.
+    Registra eventos de forma segura en RegistroAuditoria neutralizando CWE-117.
     """
     ip = sanitizar_texto_log(request.META.get('REMOTE_ADDR', '0.0.0.0'), 45)
-    BitacoraAuditoria.objects.create(
+    RegistroAuditoria.objects.create(
         usuario=request.user if request.user.is_authenticated else None,
         accion=sanitizar_texto_log(accion, 50),
         modelo_afectado=sanitizar_texto_log(modelo, 100),
