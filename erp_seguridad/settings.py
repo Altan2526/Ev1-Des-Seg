@@ -15,21 +15,11 @@ import os
 from dotenv import load_dotenv
 from django.core.exceptions import ImproperlyConfigured
 import secrets
-load_dotenv()
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-env_path = BASE_DIR / '.env'
-if env_path.exists():
-    with open(env_path, encoding='utf-8') as f:
-        for line in f:
-            line = line.strip()
-            if line and not line.startswith('#') and '=' in line:
-                key, value = line.split('=', 1)
-                os.environ.setdefault(key.strip(), value.strip())
-
-# Quick-start development settings - unsuitable for production
+load_dotenv(BASE_DIR / '.env', override=True)# Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -73,13 +63,13 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'erp_seguridad.middleware.ContentSecurityPolicyMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'erp_seguridad.middleware.ContentSecurityPolicyMiddleware',
 ]
 
 ROOT_URLCONF = 'erp_seguridad.urls'
@@ -153,11 +143,24 @@ STATIC_URL = 'static/'
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
 
-MAILERS = {
-    'default': {
-        'BACKEND': 'django.core.mail.backends.console.EmailBackend',
-    },
-}
+if DEBUG:
+    MAILERS = {
+        'default': {
+            'BACKEND': 'django.core.mail.backends.console.EmailBackend',
+        },
+    }
+else:
+    MAILERS = {
+        'default': {
+            'BACKEND': os.environ.get(
+                'DJANGO_EMAIL_BACKEND',
+                'django.core.mail.backends.smtp.EmailBackend',
+            ),
+            'HOST': os.environ.get('DJANGO_EMAIL_HOST', 'localhost'),
+            'PORT': int(os.environ.get('DJANGO_EMAIL_PORT', '587')),
+            'USE_TLS': os.environ.get('DJANGO_EMAIL_USE_TLS', 'True').lower() == 'true',
+        },
+    }
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -180,6 +183,7 @@ SESSION_SAVE_EVERY_REQUEST = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 CSRF_COOKIE_SAMESITE = 'Strict'
+CSRF_COOKIE_HTTPONLY = True
 CSRF_USE_SESSIONS = False
 
 
