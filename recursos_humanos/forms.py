@@ -8,6 +8,7 @@ from .validators import (
     validar_telefono_chileno,
 )
 from .models import safe_eval_arithmetic
+from .security_utils import validar_mime_real
 
 
 class EmpleadoForm(forms.ModelForm):
@@ -77,6 +78,18 @@ class EmpleadoForm(forms.ModelForm):
         cv = self.cleaned_data.get('curriculum')
         if cv and cv.size > 5 * 1024 * 1024:
             raise ValidationError("El currículum en PDF no puede superar los 5MB.")
+        return cv
+
+    def clean_fotografia(self):
+        foto = self.cleaned_data.get('fotografia')
+        if foto and hasattr(foto, 'read'):
+            validar_mime_real(foto, ('jpg', 'jpeg', 'png'))
+        return foto
+
+    def clean_curriculum(self):
+        cv = self.cleaned_data.get('curriculum')
+        if cv and hasattr(cv, 'read'):
+            validar_mime_real(cv, ('pdf',))
         return cv
 
 

@@ -1,5 +1,5 @@
 import re
-
+from django.core.exceptions import ValidationError
 
 def sanitizar_texto_log(valor: str, max_len: int = 400) -> str:
     """
@@ -27,3 +27,35 @@ def enmascarar_rut_log(rut: str) -> str:
         prefijo = cuerpo[:2] if len(cuerpo) >= 2 else ""
         return f"{prefijo}.**.-{dv}"
     return f"{limpio[:2]}"
+
+
+MAX_UPLOAD_BYTES = 5 * 1024 * 1024  # 5 MB por archivo
+
+
+def validar_mime_real(archivo, formatos_permitidos: tuple):
+    """
+    EV1DS-38 (CWE-434): Valida el tamaño máximo y la firma binaria real
+    (Magic Bytes) del archivo subido, independientemente de su extensión o Content-Type.
+    """
+    if not archivo:
+        return
+
+    if getattr(archivo, 'size', 0) > MAX_UPLOAD_BYTES:
+        raise ValidationError("El archivo excede el tamaño máximo permitido de 5 MB.")
+
+    pos = archivo.tell()
+    header = archivo.read(16)
+    archivo.seek(pos)
+
+    firmas_magicas = {
+        'pdf': header.startswith(b'%PDF-'),
+        'jpg': header.startswith(b'\xff\xd8\xff'),
+        'jpeg': header.startswith(b'\xff\xd8\xff'),
+        'png': header.startswith(b'\x89PNG\r\n\x1a\n'),
+    }
+
+    if not any(firmas_magicas.get(fmt, False) for fmt in formatos_permitidos):
+        raise ValidationError(
+            f"El contenido binario del archivo no corresponde a un formato válido "
+            f"({', '.join(fmt.upper() for fmt in formatos_permitidos)})."
+        )
