@@ -29,4 +29,9 @@ class ContentSecurityPolicyMiddleware:
         if 'Referrer-Policy' not in response:
             response['Referrer-Policy'] = 'same-origin'
 
+        if 'Permissions-Policy' not in response:
+                    response['Permissions-Policy'] = (
+                        "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
+                    )
+
         return response
