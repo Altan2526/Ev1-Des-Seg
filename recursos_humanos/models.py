@@ -1,12 +1,12 @@
-from django.db import models, transaction
-from django.utils import timezone
-from django.core.validators import FileExtensionValidator, MinValueValidator
-from django.contrib.auth.models import User
-from django.core.validators import MinValueValidator
-from .validators import validar_rut_chileno
-
 import ast
 import operator
+
+from django.contrib.auth.models import User
+from django.core.validators import FileExtensionValidator, MinValueValidator
+from django.db import models, transaction
+from django.utils import timezone
+
+from .validators import validar_rut_chileno
 
 # ---------------------------------------------------------------------------
 # Safe arithmetic parser (AST-based — NEVER uses eval())
@@ -386,7 +386,7 @@ class Concepto(models.Model):
         """
         if self.formula:
             resultado = safe_eval_arithmetic(self.formula, contexto)
-            return int(round(resultado))
+            return round(resultado)
         return self.monto_fijo
 
 

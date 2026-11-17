@@ -1,8 +1,10 @@
-from django.test import TestCase, Client
-from django.urls import reverse
-from django.contrib.auth.models import User
 from datetime import date
 from decimal import Decimal
+
+from django.contrib.auth.models import User
+from django.test import Client, TestCase
+from django.urls import reverse
+
 from .models import Empleado, LicenciaMedica, RegistroAuditoria
 
 
