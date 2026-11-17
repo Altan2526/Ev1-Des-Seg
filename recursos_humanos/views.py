@@ -25,7 +25,13 @@ from .models import (
     LiquidacionSueldo,
     RegistroAuditoria,
 )
-from .security_utils import sanitizar_texto_log
+
+from .security_utils import (
+    enmascarar_rut_log,
+    extraer_ids_enteros_positivos,
+    sanitizar_directivas_ssi,
+    sanitizar_texto_log,
+)
 
 VISTA_LISTA_EMPLEADOS = 'lista_empleados'
 VISTA_GESTION_DOCUMENTOS = 'gestion_documentos'
@@ -432,13 +438,28 @@ def descargar_documentos_masivos(request):
     if tipo not in ('contrato', 'finiquito'):
         return JsonResponse({'error': "Tipo de documento no válido."}, status=400)
 
-    empleados_ids = data.get('empleados_ids', [])
+    if hasattr(data, 'getlist'):
+        raw_ids = data.getlist('empleados_ids')
+    else:
+        raw_ids = data.get('empleados_ids', [])
+        if not isinstance(raw_ids, list):
+            return JsonResponse({'error': 'empleados_ids debe ser una lista de enteros.'}, status=400)
+
+    try:
+        empleados_ids = extraer_ids_enteros_positivos(raw_ids)
+    except ValueError as err:
+        registrar_log(
+            request,
+            'MODIFICAR',
+            'DocumentoEmitido',
+            f"Bloqueo de payload inválido/SSI en emisión masiva: {err!s}",
+        )
+        return JsonResponse({'error': 'Parámetros empleados_ids inválidos.'}, status=400)
+
     if not empleados_ids:
         return JsonResponse({'error': 'Debe proporcionar una lista de empleados_ids.'}, status=400)
 
     empleados = Empleado.objects.filter(id__in=empleados_ids)
-    if not empleados.exists():
-        return JsonResponse({'error': 'No se encontraron empleados con los IDs indicados.'}, status=404)
 
     tipo_db = 'CONTRATO' if tipo == 'contrato' else 'FINIQUITO'
 
